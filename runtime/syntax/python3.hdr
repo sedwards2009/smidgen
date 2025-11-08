@@ -1,0 +1,4 @@
+python
+\.py(3|w)?$
+^#!.*/(env +)?python(3)?$
+

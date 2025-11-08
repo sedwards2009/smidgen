@@ -1,0 +1,4 @@
+rpmspec
+\.spec$|\.rpmspec$
+
+

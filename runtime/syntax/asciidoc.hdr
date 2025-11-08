@@ -1,0 +1,4 @@
+asciidoc
+\.(asc|asciidoc|adoc)$
+
+

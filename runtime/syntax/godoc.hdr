@@ -1,0 +1,4 @@
+godoc
+\.godoc$
+package.*import
+

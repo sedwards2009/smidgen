@@ -1,0 +1,4 @@
+git-commit
+^(.*[\/])?(COMMIT_EDITMSG|TAG_EDITMSG|MERGE_MSG)$
+
+

@@ -1,0 +1,4 @@
+mail
+(.*/mutt-.*|\.eml)$
+^From .* \d+:\d+:\d+ \d+
+

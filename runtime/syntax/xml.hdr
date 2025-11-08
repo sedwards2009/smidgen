@@ -1,0 +1,4 @@
+xml
+\.(xml|sgml?|rng|svg|plist)$
+<\?xml.*\?>
+

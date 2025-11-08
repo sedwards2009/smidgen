@@ -1,0 +1,4 @@
+cmake
+(CMakeLists\.txt|\.cmake)$
+
+

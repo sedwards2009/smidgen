@@ -1,0 +1,4 @@
+ini
+\.(ini|desktop|lfl|override|tscn|tres)$|(mimeapps\.list|pinforc|setup\.cfg|project\.godot)$|weechat/.+\.conf$
+
+

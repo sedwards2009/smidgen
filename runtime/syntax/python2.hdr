@@ -1,0 +1,4 @@
+python2
+\.py2$
+^#!.*/(env +)?python2$
+

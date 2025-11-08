@@ -1,0 +1,4 @@
+javascript
+(\.(m|c)?js$|\.es[5678]?$)
+^#!.*/(env +)?node( |$)
+

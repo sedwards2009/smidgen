@@ -1,0 +1,4 @@
+cython
+\.pyx$|\.pxd$|\.pyi$
+
+

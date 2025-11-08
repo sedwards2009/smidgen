@@ -1,0 +1,4 @@
+etc-portage
+\.(keywords|mask|unmask|use)(/.+)?$
+
+

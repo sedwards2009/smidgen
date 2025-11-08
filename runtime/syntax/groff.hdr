@@ -1,0 +1,4 @@
+groff
+\.m[ems]$|\.rof|\.tmac$|^tmac.
+
+

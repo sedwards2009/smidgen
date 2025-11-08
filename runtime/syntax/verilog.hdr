@@ -1,0 +1,4 @@
+verilog
+\.(v|vh|sv|svh)$
+
+

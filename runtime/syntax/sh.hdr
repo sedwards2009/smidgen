@@ -1,0 +1,4 @@
+shell
+(\.(sh|bash|ash|ebuild)$|(\.bash(rc|_aliases|_functions|_profile)|\.?profile|Pkgfile|pkgmk\.conf|rc\.conf|PKGBUILD|APKBUILD)$|bash-fc\.)
+^#!.*/(env +)?(ba)?(a)?(mk)?sh( |$)
+

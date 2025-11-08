@@ -1,0 +1,4 @@
+ebuild
+\.e(build|class)$
+
+

@@ -1,0 +1,4 @@
+graphql
+\.(gql|graphql)$
+
+

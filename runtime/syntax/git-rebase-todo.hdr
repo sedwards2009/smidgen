@@ -1,0 +1,4 @@
+git-rebase-todo
+^(.*[\/])?git\-rebase\-todo$
+
+

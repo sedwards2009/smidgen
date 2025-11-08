@@ -1,0 +1,4 @@
+powershell
+\.ps(1|m1|d1)$
+
+

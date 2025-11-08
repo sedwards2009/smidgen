@@ -1,0 +1,4 @@
+objective-c
+\.(m|mm|h)$
+
+(obj|objective)-c|#import|@(encode|end|interface|implementation|selector|protocol|synchronized|try|catch|finally|property|optional|required|import|autoreleasepool)

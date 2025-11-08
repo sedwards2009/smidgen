@@ -1,0 +1,4 @@
+c++
+(\.c(c|pp|xx)$|\.h(h|pp|xx)?$|\.ii?$|\.(def)$)
+
+namespace|template|public|protected|private

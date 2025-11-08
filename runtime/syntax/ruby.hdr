@@ -1,0 +1,4 @@
+ruby
+\.(rb|rake|gemspec)$|^(.*[\/])?(Gemfile|config.ru|Rakefile|Capfile|Vagrantfile|Guardfile|Appfile|Fastfile|Pluginfile|Podfile|\.?[Bb]rewfile)$
+^#!.*/(env +)?ruby( |$)
+
