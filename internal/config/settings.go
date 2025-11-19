@@ -1,16 +1,21 @@
 package config
 
-import "runtime"
+import (
+	"errors"
+	"runtime"
+	"strings"
 
-/*
+	"golang.org/x/text/encoding/htmlindex"
+)
+
 type optionValidator func(string, any) error
 
 // a list of settings that need option validators
 var optionValidators = map[string]optionValidator{
-	"autosave":        validateNonNegativeValue,
-	"clipboard":       validateChoice,
-	"colorcolumn":     validateNonNegativeValue,
-	"colorscheme":     validateColorscheme,
+	"autosave":    validateNonNegativeValue,
+	"clipboard":   validateChoice,
+	"colorcolumn": validateNonNegativeValue,
+	// "colorscheme":     validateColorscheme,
 	"detectlimit":     validateNonNegativeValue,
 	"encoding":        validateEncoding,
 	"fileformat":      validateChoice,
@@ -18,7 +23,6 @@ var optionValidators = map[string]optionValidator{
 	"matchbracestyle": validateChoice,
 	"multiopen":       validateChoice,
 	"pageoverlap":     validateNonNegativeValue,
-	"reload":          validateChoice,
 	"scrollmargin":    validateNonNegativeValue,
 	"scrollspeed":     validateNonNegativeValue,
 	"tabsize":         validatePositiveValue,
@@ -31,9 +35,8 @@ var OptionChoices = map[string][]string{
 	"helpsplit":       {"hsplit", "vsplit"},
 	"matchbracestyle": {"underline", "highlight"},
 	"multiopen":       {"tab", "hsplit", "vsplit"},
-	"reload":          {"prompt", "auto", "disabled"},
 }
-*/
+
 // a list of settings that can be globally and locally modified and their
 // default values
 var defaultCommonSettings = map[string]any{
@@ -51,18 +54,13 @@ var defaultCommonSettings = map[string]any{
 	"hlsearch":        false,
 	"hltaberrors":     false,
 	"hltrailingws":    false,
-	"ignorecase":      true,
-	"incsearch":       true,
 	"indentchar":      " ", // Deprecated
 	"keepautoindent":  false,
 	"matchbrace":      true,
 	"matchbraceleft":  true,
 	"matchbracestyle": "underline",
 	"pageoverlap":     float64(2),
-	"permbackup":      false,
-	"readonly":        false,
 	"relativeruler":   false,
-	"reload":          "prompt",
 	"rmtrailingws":    false,
 	"ruler":           true,
 	"scrollbar":       false,
@@ -83,26 +81,28 @@ var defaultCommonSettings = map[string]any{
 /*
 // a list of settings that should only be globally modified and their
 // default values
-var DefaultGlobalOnlySettings = map[string]any{
-	"clipboard":     "external",
-	"colorscheme":   "default",
-	"divreverse":    true,
-	"fakecursor":    false,
-	"mouse":         true,
-	"multiopen":     "tab",
-	"parsecursor":   false,
-	"paste":         false,
-	"scrollbarchar": "|",
-	"tabhighlight":  false,
-	"tabreverse":    true,
-}
+
+	var DefaultGlobalOnlySettings = map[string]any{
+		"clipboard":     "external",
+		"colorscheme":   "default",
+		"divreverse":    true,
+		"fakecursor":    false,
+		"mouse":         true,
+		"multiopen":     "tab",
+		"parsecursor":   false,
+		"paste":         false,
+		"scrollbarchar": "|",
+		"tabhighlight":  false,
+		"tabreverse":    true,
+	}
 
 // a list of settings that should never be globally modified
-var LocalSettings = []string{
-	"filetype",
-	"readonly",
-}
 
+	var LocalSettings = []string{
+		"filetype",
+		"readonly",
+	}
+*/
 var (
 	ErrInvalidOption    = errors.New("Invalid option")
 	ErrInvalidValue     = errors.New("Invalid value")
@@ -113,11 +113,10 @@ var (
 	settingsParseError bool
 )
 
+/*
 // func writeFile(name string, txt []byte) error {
 // 	return util.SafeWrite(name, txt, false)
 // }
-*/
-/*
 	func validateParsedSettings() error {
 		var err error
 		defaults := DefaultAllSettings()
@@ -263,7 +262,7 @@ func DefaultAllSettings() map[string]any {
 	}
 	return allsettings
 }
-
+*/
 // OptionIsValid checks if a value is valid for a certain option
 func OptionIsValid(option string, value any) error {
 	if validator, ok := optionValidators[option]; ok {
@@ -323,22 +322,21 @@ func validateChoice(option string, value any) error {
 	return errors.New("Option has no pre-defined choices")
 }
 
-func validateColorscheme(option string, value any) error {
-	colorscheme, ok := value.(string)
+// func validateColorscheme(option string, value any) error {
+// 	colorscheme, ok := value.(string)
 
-	if !ok {
-		return errors.New("Expected string type for colorscheme")
-	}
+// 	if !ok {
+// 		return errors.New("Expected string type for colorscheme")
+// 	}
 
-	if !ColorschemeExists(colorscheme) {
-		return errors.New(colorscheme + " is not a valid colorscheme")
-	}
+// 	if !ColorschemeExists(colorscheme) {
+// 		return errors.New(colorscheme + " is not a valid colorscheme")
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func validateEncoding(option string, value any) error {
 	_, err := htmlindex.Get(value.(string))
 	return err
 }
-*/

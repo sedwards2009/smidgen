@@ -32,48 +32,12 @@ import (
 // because hashing is too slow
 const LargeFileThreshold = 50000
 
-var (
-	// OpenBuffers is a list of the currently open buffers
-	OpenBuffers []*Buffer
-	// LogBuf is a reference to the log buffer which can be opened with the
-	// `> log` command
-	LogBuf *Buffer
-)
-
-// The BufType defines what kind of buffer this is
-type BufType struct {
-	Kind     int
-	Readonly bool // The buffer cannot be edited
-	Scratch  bool // The buffer cannot be saved
-	Syntax   bool // Syntax highlighting is enabled
-}
-
-var (
-	// BTDefault is a default buffer
-	BTDefault = BufType{0, false, false, true}
-	// BTHelp is a help buffer
-	BTHelp = BufType{1, true, true, true}
-	// BTLog is a log buffer
-	BTLog = BufType{2, true, true, false}
-	// BTScratch is a buffer that cannot be saved (for scratch work)
-	BTScratch = BufType{3, false, true, false}
-	// BTRaw is a buffer that shows raw terminal events
-	BTRaw = BufType{4, false, true, false}
-	// BTInfo is a buffer for inputting information
-	BTInfo = BufType{5, false, true, false}
-	// BTStdout is a buffer that only writes to stdout
-	// when closed
-	BTStdout = BufType{6, false, true, true}
-)
-
 // SharedBuffer is a struct containing info that is shared among buffers
 // that have the same file open
 type SharedBuffer struct {
 	*LineArray
 	// Stores the last modification time of the file the buffer is pointing to
 	ModTime time.Time
-	// Type of the buffer (e.g. help, raw, scratch etc..)
-	Type BufType
 
 	// Path to the file on disk
 	Path string
@@ -82,12 +46,7 @@ type SharedBuffer struct {
 	// Name of the buffer on the status line
 	name string
 
-	toStdout bool
-
-	// Settings customized by the user
 	Settings map[string]any
-	// LocalSettings customized by the user for this buffer only
-	// LocalSettings map[string]bool
 
 	encoding encoding.Encoding
 
@@ -100,12 +59,6 @@ type SharedBuffer struct {
 	diffBaseLineCount int
 	diffLock          sync.RWMutex
 	diff              map[int]DiffStatus
-
-	forceKeepBackup bool
-
-	// ReloadDisabled allows the user to disable reloads if they
-	// are viewing a file that is constantly changing
-	ReloadDisabled bool
 
 	isModified bool
 	// Whether or not suggestions can be autocompleted must be shared because
@@ -123,7 +76,17 @@ type SharedBuffer struct {
 	// Hash of the original buffer -- empty if fastdirty is on
 	origHash [md5.Size]byte
 
-	screenRedrawCallback func()
+	screenRedrawCallbacks []func()
+}
+
+func (b *SharedBuffer) RegisterRedrawCallback(callback func()) {
+	b.screenRedrawCallbacks = append(b.screenRedrawCallbacks, callback)
+}
+
+func (b *SharedBuffer) fireScreenRedrawCallbacks() {
+	for _, callback := range b.screenRedrawCallbacks {
+		callback()
+	}
 }
 
 func (b *SharedBuffer) insert(pos Loc, value []byte) {
@@ -143,10 +106,6 @@ func (b *SharedBuffer) remove(start, end Loc) []byte {
 }
 
 func (b *SharedBuffer) setModified() {
-	if b.Type.Scratch {
-		return
-	}
-
 	if b.Settings["fastdirty"].(bool) {
 		b.isModified = true
 	} else {
@@ -196,11 +155,6 @@ func (b *SharedBuffer) MarkModified(start, end int) {
 	for i := start; i <= end; i++ {
 		b.LineArray.invalidateSearchMatches(i)
 	}
-}
-
-// DisableReload disables future reloads of this sharedbuffer
-func (b *SharedBuffer) DisableReload() {
-	b.ReloadDisabled = true
 }
 
 const (
@@ -338,13 +292,13 @@ func NewBufferFromFileWithCommand(path string, btype BufType, cmd Command) (*Buf
 
 // NewBufferFromStringWithCommand creates a new buffer containing the given string
 // with a cursor loc and a search text
-func NewBufferFromStringWithCommand(text, path string, btype BufType, cmd Command, screenRedrawCallback func()) *Buffer {
-	return NewBuffer(strings.NewReader(text), int64(len(text)), path, btype, cmd, screenRedrawCallback)
+func NewBufferFromStringWithCommand(text, path string, screenRedrawCallback func()) *Buffer {
+	return NewBuffer(strings.NewReader(text), int64(len(text)), path)
 }
 
 // NewBufferFromString creates a new buffer containing the given string
-func NewBufferFromString(text, path string, btype BufType, screenRedrawCallback func()) *Buffer {
-	return NewBuffer(strings.NewReader(text), int64(len(text)), path, btype, emptyCommand, screenRedrawCallback)
+func NewBufferFromString(text, path string) *Buffer {
+	return NewBuffer(strings.NewReader(text), int64(len(text)), path)
 }
 
 // NewBuffer creates a new buffer from a given reader with a given path
@@ -352,7 +306,7 @@ func NewBufferFromString(text, path string, btype BufType, screenRedrawCallback 
 // a new buffer
 // Places the cursor at startcursor. If startcursor is -1, -1 places the
 // cursor at an autodetected location (based on savecursor or :LINE:COL)
-func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command, screenRedrawCallback func()) *Buffer {
+func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		absPath = path
@@ -360,63 +314,44 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command,
 
 	b := new(Buffer)
 
-	found := false
-	if len(path) > 0 {
-		for _, buf := range OpenBuffers {
-			if buf.AbsPath == absPath && buf.Type != BTInfo {
-				found = true
-				b.SharedBuffer = buf.SharedBuffer
-				b.EventHandler = buf.EventHandler
-			}
-		}
+	b.SharedBuffer = new(SharedBuffer)
+
+	b.AbsPath = absPath
+	b.Path = path
+
+	b.Settings = config.DefaultCommonSettings()
+	// b.LocalSettings = make(map[string]bool)
+	// config.UpdatePathGlobLocals(b.Settings, absPath)
+
+	b.encoding, err = htmlindex.Get(b.Settings["encoding"].(string))
+	if err != nil {
+		b.encoding = unicode.UTF8
+		b.Settings["encoding"] = "utf-8"
 	}
 
-	if !found {
-		b.SharedBuffer = new(SharedBuffer)
-		b.Type = btype
+	reader := bufio.NewReader(transform.NewReader(r, b.encoding.NewDecoder()))
 
-		b.AbsPath = absPath
-		b.Path = path
-
-		b.Settings = config.DefaultCommonSettings()
-		// b.LocalSettings = make(map[string]bool)
-		// config.UpdatePathGlobLocals(b.Settings, absPath)
-
-		b.encoding, err = htmlindex.Get(b.Settings["encoding"].(string))
-		if err != nil {
-			b.encoding = unicode.UTF8
-			b.Settings["encoding"] = "utf-8"
+	var ff FileFormat = FFAuto
+	if size == 0 {
+		// for empty files, use the fileformat setting instead of
+		// autodetection
+		switch b.Settings["fileformat"] {
+		case "unix":
+			ff = FFUnix
+		case "dos":
+			ff = FFDos
 		}
-
-		reader := bufio.NewReader(transform.NewReader(r, b.encoding.NewDecoder()))
-
-		var ff FileFormat = FFAuto
-
-		if size == 0 {
-			// for empty files, use the fileformat setting instead of
-			// autodetection
-			switch b.Settings["fileformat"] {
-			case "unix":
-				ff = FFUnix
-			case "dos":
-				ff = FFDos
-			}
-		} else {
-			// in case of autodetection treat as locally set
-			// b.LocalSettings["fileformat"] = true
-		}
-
-		b.LineArray = NewLineArray(uint64(size), ff, reader)
-
-		b.EventHandler = NewEventHandler(b.SharedBuffer, b.cursors)
-
-		// The last time this file was modified
-		b.UpdateModTime()
+	} else {
+		// in case of autodetection treat as locally set
+		// b.LocalSettings["fileformat"] = true
 	}
 
-	if b.Settings["readonly"].(bool) && b.Type == BTDefault {
-		b.Type.Readonly = true
-	}
+	b.LineArray = NewLineArray(uint64(size), ff, reader)
+
+	b.EventHandler = NewEventHandler(b.SharedBuffer, b.cursors)
+
+	// The last time this file was modified
+	b.UpdateModTime()
 
 	switch b.Endings {
 	case FFUnix:
@@ -424,36 +359,15 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command,
 	case FFDos:
 		b.Settings["fileformat"] = "dos"
 	}
-	b.screenRedrawCallback = screenRedrawCallback
+
 	b.UpdateRules()
 	// we know the filetype now, so update per-filetype settings
 	// config.UpdateFileTypeLocals(b.Settings, b.Settings["filetype"].(string))
 
-	if cmd.StartCursor.X != -1 && cmd.StartCursor.Y != -1 {
-		b.StartCursor = cmd.StartCursor
-	}
-
 	b.AddCursor(NewCursor(b, b.StartCursor))
 	b.GetActiveCursor().Relocate()
 
-	if cmd.SearchRegex != "" {
-		match, found, _ := b.FindNext(cmd.SearchRegex, b.Start(), b.End(), b.StartCursor, true, true)
-		if found {
-			if cmd.SearchAfterStart {
-				// Search from current cursor and move it accordingly
-				b.GetActiveCursor().SetSelectionStart(match[0])
-				b.GetActiveCursor().SetSelectionEnd(match[1])
-				b.GetActiveCursor().OrigSelection[0] = b.GetActiveCursor().CurSelection[0]
-				b.GetActiveCursor().OrigSelection[1] = b.GetActiveCursor().CurSelection[1]
-				b.GetActiveCursor().GotoLoc(match[1])
-			}
-			b.LastSearch = cmd.SearchRegex
-			b.LastSearchRegex = true
-			b.HighlightSearch = b.Settings["hlsearch"].(bool)
-		}
-	}
-
-	if !b.Settings["fastdirty"].(bool) && !found {
+	if !b.Settings["fastdirty"].(bool) {
 		if size > LargeFileThreshold {
 			// If the file is larger than LargeFileThreshold fastdirty needs to be on
 			b.Settings["fastdirty"] = true
@@ -463,51 +377,8 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command,
 			b.calcHash(&b.origHash)
 		}
 	}
-
-	// err = config.RunPluginFn("onBufferOpen", luar.New(ulua.L, b))
-	// if err != nil {
-	// 	log.Printf(err)
-	// }
-
-	OpenBuffers = append(OpenBuffers, b)
-
 	return b
 }
-
-// CloseOpenBuffers removes all open buffers
-// func CloseOpenBuffers() {
-// 	for i, buf := range OpenBuffers {
-// 		buf.Fini()
-// 		OpenBuffers[i] = nil
-// 	}
-// 	OpenBuffers = OpenBuffers[:0]
-// }
-
-// Close removes this buffer from the list of open buffers
-// func (b *Buffer) Close() {
-// 	for i, buf := range OpenBuffers {
-// 		if b == buf {
-// 			b.Fini()
-// 			copy(OpenBuffers[i:], OpenBuffers[i+1:])
-// 			OpenBuffers[len(OpenBuffers)-1] = nil
-// 			OpenBuffers = OpenBuffers[:len(OpenBuffers)-1]
-// 			return
-// 		}
-// 	}
-// }
-
-// Fini should be called when a buffer is closed and performs
-// some cleanup
-// func (b *Buffer) Fini() {
-// 	if !b.Modified() {
-// 		b.Serialize()
-// 	}
-// 	b.CancelBackup()
-
-// 	if b.Type == BTStdout {
-// 		fmt.Fprint(util.Stdout, string(b.Bytes()))
-// 	}
-// }
 
 // GetName returns the name that should be displayed in the statusline
 // for this buffer
@@ -532,20 +403,16 @@ func (b *Buffer) SetName(s string) {
 
 // Insert inserts the given string of text at the start location
 func (b *Buffer) Insert(start Loc, text string) {
-	if !b.Type.Readonly {
-		b.EventHandler.cursors = b.cursors
-		b.EventHandler.active = b.curCursor
-		b.EventHandler.Insert(start, text)
-	}
+	b.EventHandler.cursors = b.cursors
+	b.EventHandler.active = b.curCursor
+	b.EventHandler.Insert(start, text)
 }
 
 // Remove removes the characters between the start and end locations
 func (b *Buffer) Remove(start, end Loc) {
-	if !b.Type.Readonly {
-		b.EventHandler.cursors = b.cursors
-		b.EventHandler.active = b.curCursor
-		b.EventHandler.Remove(start, end)
-	}
+	b.EventHandler.cursors = b.cursors
+	b.EventHandler.active = b.curCursor
+	b.EventHandler.Remove(start, end)
 }
 
 // FileType returns the buffer's filetype
@@ -656,16 +523,6 @@ func (b *Buffer) WordAt(loc Loc) []byte {
 	}
 
 	return b.Substr(start, end)
-}
-
-// Shared returns if there are other buffers with the same file as this buffer
-func (b *Buffer) Shared() bool {
-	for _, buf := range OpenBuffers {
-		if buf != b && buf.SharedBuffer == b.SharedBuffer {
-			return true
-		}
-	}
-	return false
 }
 
 // Modified returns if this buffer has been modified since
@@ -790,9 +647,6 @@ func resolveIncludes(syndef *highlight.Def) {
 // UpdateRules updates the syntax rules and filetype for this buffer
 // This is called when the colorscheme changes
 func (b *Buffer) UpdateRules() {
-	if !b.Type.Syntax {
-		return
-	}
 	ft := b.Settings["filetype"].(string)
 	if ft == "off" {
 		b.ClearMatches()
@@ -979,7 +833,7 @@ func (b *Buffer) UpdateRules() {
 			go func() {
 				b.Highlighter.HighlightStates(b)
 				b.Highlighter.HighlightMatches(b, 0, b.End().Y)
-				b.screenRedrawCallback()
+				b.fireScreenRedrawCallbacks()
 			}()
 		}
 	}
@@ -1367,7 +1221,7 @@ func (b *Buffer) UpdateDiff() {
 		b.updateDiffTimer = time.AfterFunc(500*time.Millisecond, func() {
 			b.updateDiffTimer = nil
 			b.updateDiff(false)
-			b.screenRedrawCallback()
+			b.fireScreenRedrawCallbacks()
 		})
 	} else {
 		// Don't compute diffs for very large files
@@ -1436,13 +1290,3 @@ func (b *Buffer) FindNextDiffLine(startLine int, forward bool) (int, error) {
 func (b *Buffer) SearchMatch(pos Loc) bool {
 	return b.LineArray.SearchMatch(b, pos)
 }
-
-// WriteLog writes a string to the log buffer
-// func WriteLog(s string) {
-// 	LogBuf.EventHandler.Insert(LogBuf.End(), s)
-// }
-
-// // GetLogBuf returns the log buffer
-// func GetLogBuf() *Buffer {
-// 	return LogBuf
-// }

@@ -175,7 +175,7 @@ func (w *BufWindow) getStartInfo(screen tcell.Screen, n, lineN int) ([]byte, int
 	for len(b) > 0 {
 		r, _, size := util.DecodeCharacter(b)
 
-		curStyle, found := w.getStyle(screen, curStyle, bloc)
+		curStyle, found := w.getStyle(curStyle, bloc)
 		if found {
 			s = &curStyle
 		}
@@ -197,15 +197,6 @@ func (w *BufWindow) getStartInfo(screen tcell.Screen, n, lineN int) ([]byte, int
 	}
 	return b, n - width, bloc.X, s
 }
-
-// Clear resets all cells in this window to the default style
-// func (w *BufWindow) Clear() {
-// 	for y := 0; y < w.Height; y++ {
-// 		for x := 0; x < w.Width; x++ {
-// 			screen.SetContent(w.X+x, w.Y+y, ' ', nil, config.DefStyle)
-// 		}
-// 	}
-// }
 
 // Relocate moves the view window so that the cursor is in view
 // This is useful if the user has scrolled far away, and then starts typing
@@ -347,9 +338,9 @@ func (w *BufWindow) drawLineNum(screen tcell.Screen, lineNumStyle tcell.Style, s
 
 // getStyle returns the highlight style for the given character position
 // If there is no change to the current highlight style it just returns that
-func (w *BufWindow) getStyle(screen tcell.Screen, style tcell.Style, bloc buffer.Loc) (tcell.Style, bool) {
+func (w *BufWindow) getStyle(style tcell.Style, bloc buffer.Loc) (tcell.Style, bool) {
 	if group, ok := w.Buf.Match(bloc.Y)[bloc.X]; ok {
-		s := config.GetColor(group.String())
+		s := w.Colorscheme.GetColor(group.String())
 		return s, true
 	}
 	return style, false
@@ -706,7 +697,7 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 			line = line[size:]
 
 			loc := buffer.Loc{X: bloc.X + len(word), Y: bloc.Y}
-			curStyle, _ = w.getStyle(screen, curStyle, loc)
+			curStyle, _ = w.getStyle(curStyle, loc)
 
 			width := 0
 
@@ -817,34 +808,6 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 		}
 	}
 }
-
-// func (w *BufWindow) displayStatusLine() {
-// 	if w.Buf.Settings["statusline"].(bool) {
-// 		w.sline.Display()
-// 	} else if w.drawDivider {
-// 		divchars := config.GetGlobalOption("divchars").(string)
-// 		if util.CharacterCountInString(divchars) != 2 {
-// 			divchars = "|-"
-// 		}
-
-// 		_, _, size := util.DecodeCharacterInString(divchars)
-// 		divchar, combc, _ := util.DecodeCharacterInString(divchars[size:])
-
-// 		dividerStyle := config.DefStyle
-// 		if style, ok := config.Colorscheme["divider"]; ok {
-// 			dividerStyle = style
-// 		}
-
-// 		divreverse := config.GetGlobalOption("divreverse").(bool)
-// 		if divreverse {
-// 			dividerStyle = dividerStyle.Reverse(true)
-// 		}
-
-// 		for x := w.X; x < w.X+w.Width; x++ {
-// 			screen.SetContent(x, w.Y+w.Height-1, divchar, combc, dividerStyle)
-// 		}
-// 	}
-// }
 
 func (w *BufWindow) displayScrollBar(screen tcell.Screen) {
 	if w.Buf.Settings["scrollbar"].(bool) && w.Buf.LinesNum() > w.Height {

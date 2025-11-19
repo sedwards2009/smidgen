@@ -1,6 +1,7 @@
 package buffer
 
 import (
+	"github.com/sedwards2009/smidgen/internal/clipboard"
 	"github.com/sedwards2009/smidgen/internal/util"
 )
 
@@ -142,13 +143,11 @@ func (c *Cursor) End() {
 
 // CopySelection copies the user's selection to either "primary"
 // or "clipboard"
-// func (c *Cursor) CopySelection(target clipboard.Register) {
-// 	if c.HasSelection() {
-// 		if target != clipboard.PrimaryReg || c.buf.Settings["useprimary"].(bool) {
-// 			clipboard.WriteMulti(string(c.GetSelection()), target, c.Num, c.buf.NumCursors())
-// 		}
-// 	}
-// }
+func (c *Cursor) CopySelection() {
+	if c.HasSelection() {
+		clipboard.ClipboardWriteAll(string(c.GetSelection()))
+	}
+}
 
 // ResetSelection resets the user's selection
 func (c *Cursor) ResetSelection() {

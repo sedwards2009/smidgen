@@ -12,11 +12,8 @@ import (
 // Colorscheme is a map from string to style -- it represents a colorscheme
 type Colorscheme map[string]tcell.Style
 
-// Colorscheme is the current colorscheme
-var colorscheme Colorscheme
-
 // GetColor takes in a syntax group and returns the colorscheme's style for that group
-func GetColor(color string) tcell.Style {
+func (colorscheme Colorscheme) GetColor(color string) tcell.Style {
 	var st tcell.Style
 	if color == "" {
 		return colorscheme.GetDefault()
@@ -53,9 +50,6 @@ func (colorscheme Colorscheme) GetDefault() tcell.Style {
 // }
 
 // InitColorscheme picks and initializes the colorscheme when micro starts
-func init() {
-	colorscheme = make(Colorscheme)
-}
 
 // LoadDefaultColorscheme loads the default colorscheme from $(ConfigDir)/colorschemes
 // func LoadDefaultColorscheme() (map[string]tcell.Style, error) {

@@ -31,10 +31,6 @@ type RuntimeFile interface {
 var allFiles [][]RuntimeFile
 var realFiles [][]RuntimeFile
 
-func init() {
-	initRuntimeVars()
-}
-
 func initRuntimeVars() {
 	allFiles = make([][]RuntimeFile, NumTypes)
 	realFiles = make([][]RuntimeFile, NumTypes)

@@ -138,15 +138,7 @@ func (b *Buffer) findAll(r *regexp.Regexp, start, end Loc) [][2]Loc {
 	return matches
 }
 
-// FindNext finds the next occurrence of a given string in the buffer
-// It returns the start and end location of the match (if found) and
-// a boolean indicating if it was found
-// May also return an error if the search regex is invalid
-func (b *Buffer) FindNext(s string, start, end, from Loc, down bool, useRegex bool) ([2]Loc, bool, error) {
-	if s == "" {
-		return [2]Loc{}, false, nil
-	}
-
+func CreateRegex(s string, useRegex bool, caseSensitive bool) (*regexp.Regexp, error) {
 	var r *regexp.Regexp
 	var err error
 
@@ -154,30 +146,36 @@ func (b *Buffer) FindNext(s string, start, end, from Loc, down bool, useRegex bo
 		s = regexp.QuoteMeta(s)
 	}
 
-	if b.Settings["ignorecase"].(bool) {
-		r, err = regexp.Compile("(?i)" + s)
-	} else {
+	if caseSensitive {
 		r, err = regexp.Compile(s)
+	} else {
+		r, err = regexp.Compile("(?i)" + s)
+	}
+	return r, err
+}
+
+// FindNext finds the next occurrence of a given string in the buffer
+// It returns the start and end location of the match (if found) and
+// a boolean indicating if it was found
+// May also return an error if the search regex is invalid
+func (b *Buffer) FindNext(s string, start, end, from Loc, down bool, useRegex bool, caseSensitive bool) ([2]Loc, bool, error) {
+	if s == "" {
+		return [2]Loc{}, false, nil
 	}
 
+	r, err := CreateRegex(s, useRegex, caseSensitive)
 	if err != nil {
 		return [2]Loc{}, false, err
 	}
 
 	var found bool
-	var l [2]Loc
+	var locationPair [2]Loc
 	if down {
-		l, found = b.findDown(r, from, end)
-		if !found {
-			l, found = b.findDown(r, start, end)
-		}
+		locationPair, found = b.findDown(r, from, end)
 	} else {
-		l, found = b.findUp(r, from, start)
-		if !found {
-			l, found = b.findUp(r, end, start)
-		}
+		locationPair, found = b.findUp(r, from, start)
 	}
-	return l, found, nil
+	return locationPair, found, nil
 }
 
 // ReplaceRegex replaces all occurrences of 'search' with 'replace' in the given area

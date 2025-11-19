@@ -411,7 +411,7 @@ func (la *LineArray) SearchMatch(b *Buffer, pos Loc) bool {
 		start := Loc{0, lineN}
 		end := Loc{util.CharacterCount(la.lines[lineN].data), lineN}
 		for start.X < end.X {
-			m, found, _ := b.FindNext(b.LastSearch, start, end, start, true, b.LastSearchRegex)
+			m, found, _ := b.FindNext(b.LastSearch, start, end, start, true, true, b.LastSearchRegex)
 			if !found {
 				break
 			}

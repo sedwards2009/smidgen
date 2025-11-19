@@ -1,6 +1,7 @@
 package display
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/sedwards2009/smidgen/internal/buffer"
 )
 
@@ -18,8 +19,7 @@ type View struct {
 }
 
 type Window interface {
-	Display()
-	Clear()
+	Display(screen tcell.Screen)
 	Relocate() bool
 	GetView() *View
 	SetView(v *View)
