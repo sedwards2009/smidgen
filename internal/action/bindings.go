@@ -2,7 +2,6 @@ package action
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -11,61 +10,21 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-var Binder = map[string]func(e Event, action string){
-	"buffer": BufMapEvent,
-}
-
-// InitBindings intializes the bindings map by reading from bindings.json
-func InitBindings() {
-	var parsed map[string]any
-
+func BindingMappingToKeyTree(bufdefaults map[string]string) *KeyTree {
+	keyTree := NewKeyTree()
 	for k, v := range bufdefaults {
-		BindKey(k, v, BufMapEvent)
+		BindKey(keyTree, k, v)
 	}
-
-	for k, v := range parsed {
-		switch val := v.(type) {
-		case string:
-			BindKey(k, val, BufMapEvent)
-		case map[string]any:
-			bind, ok := Binder[k]
-			if !ok || bind == nil {
-				log.Printf(fmt.Sprintf("%s is not a valid pane type", k))
-				continue
-			}
-			for e, a := range val {
-				s, ok := a.(string)
-				if !ok {
-					log.Printf("Error reading bindings.json: non-string and non-map entry", k)
-				} else {
-					BindKey(e, s, bind)
-				}
-			}
-		default:
-			log.Printf("Error reading bindings.json: non-string and non-map entry", k)
-		}
-	}
+	return keyTree
 }
 
-func BindKey(k, v string, bind func(e Event, a string)) {
+func BindKey(keyTree *KeyTree, k, v string) {
 	event, err := findEvent(k)
 	if err != nil {
 		log.Printf("%v", err)
 		return
 	}
-
-	bind(event, v)
-
-	// switch e := event.(type) {
-	// case KeyEvent:
-	// 	InfoMapKey(e, v)
-	// case KeySequenceEvent:
-	// 	InfoMapKey(e, v)
-	// case MouseEvent:
-	// 	InfoMapMouse(e, v)
-	// case RawEvent:
-	// 	InfoMapKey(e, v)
-	// }
+	BufMapEvent(keyTree, event, v)
 }
 
 var r = regexp.MustCompile("<(.+?)>")
@@ -94,6 +53,27 @@ func findEvents(k string) (b KeySequenceEvent, ok bool, err error) {
 	}
 
 	return KeySequenceEvent{events}, true, nil
+}
+
+type KeyDesc struct {
+	KeyCode   tcell.Key
+	Modifiers tcell.ModMask
+	R         rune
+}
+
+func ParseKeyboardSequence(k string) (KeyDesc, bool) {
+	ev, ok := findSingleEvent(k)
+	if !ok {
+		return KeyDesc{}, false
+	}
+	if ke, ok := ev.(KeyEvent); ok {
+		return KeyDesc{
+			KeyCode:   ke.code,
+			Modifiers: ke.mod,
+			R:         ke.r,
+		}, true
+	}
+	return KeyDesc{}, false
 }
 
 // findSingleEvent will find binding Key 'b' using string 'k'

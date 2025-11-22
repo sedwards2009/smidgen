@@ -43,7 +43,6 @@ func NewView(app *tview.Application, buffer *Buffer) *View {
 	})
 
 	v.bufPane = action.NewBufPane(v.buffer, v.bufWindow)
-	action.InitBindings()
 	return v
 }
 
@@ -96,6 +95,18 @@ func (v *View) ActionController() *ActionController {
 	return &ActionController{v.bufPane}
 }
 
+type Keybindings struct {
+	*action.KeyTree
+}
+
+func ParseKeybindings(config map[string]string) Keybindings {
+	return Keybindings{action.BindingMappingToKeyTree(config)}
+}
+
+func (v *View) SetKeybindings(keybindings Keybindings) {
+	v.bufPane.SetBindings(keybindings.KeyTree)
+}
+
 func NewBufferFromString(content string, path string) *Buffer {
 	return &Buffer{
 		Buffer: buffer.NewBufferFromString(content, path),
@@ -133,4 +144,95 @@ func (v *View) MapActionNameToAction(name string) Action {
 		}
 	}
 	return nil
+}
+
+// Actions
+const (
+	ActionCursorUp               = "CursorUp"
+	ActionCursorDown             = "CursorDown"
+	ActionCursorPageUp           = "CursorPageUp"
+	ActionCursorPageDown         = "CursorPageDown"
+	ActionCursorLeft             = "CursorLeft"
+	ActionCursorRight            = "CursorRight"
+	ActionCursorStart            = "CursorStart"
+	ActionCursorEnd              = "CursorEnd"
+	ActionSelectToStart          = "SelectToStart"
+	ActionSelectToEnd            = "SelectToEnd"
+	ActionSelectUp               = "SelectUp"
+	ActionSelectDown             = "SelectDown"
+	ActionSelectLeft             = "SelectLeft"
+	ActionSelectRight            = "SelectRight"
+	ActionWordRight              = "WordRight"
+	ActionWordLeft               = "WordLeft"
+	ActionSelectWordRight        = "SelectWordRight"
+	ActionSelectWordLeft         = "SelectWordLeft"
+	ActionDeleteWordRight        = "DeleteWordRight"
+	ActionDeleteWordLeft         = "DeleteWordLeft"
+	ActionSelectLine             = "SelectLine"
+	ActionSelectToStartOfLine    = "SelectToStartOfLine"
+	ActionSelectToEndOfLine      = "SelectToEndOfLine"
+	ActionParagraphPrevious      = "ParagraphPrevious"
+	ActionParagraphNext          = "ParagraphNext"
+	ActionInsertNewline          = "InsertNewline"
+	ActionInsertSpace            = "InsertSpace"
+	ActionBackspace              = "Backspace"
+	ActionDelete                 = "Delete"
+	ActionInsertTab              = "InsertTab"
+	ActionCenter                 = "Center"
+	ActionUndo                   = "Undo"
+	ActionRedo                   = "Redo"
+	ActionCopy                   = "Copy"
+	ActionCut                    = "Cut"
+	ActionCutLine                = "CutLine"
+	ActionDuplicateLine          = "DuplicateLine"
+	ActionDeleteLine             = "DeleteLine"
+	ActionMoveLinesUp            = "MoveLinesUp"
+	ActionMoveLinesDown          = "MoveLinesDown"
+	ActionIndentSelection        = "IndentSelection"
+	ActionOutdentSelection       = "OutdentSelection"
+	ActionOutdentLine            = "OutdentLine"
+	ActionPaste                  = "Paste"
+	ActionSelectAll              = "SelectAll"
+	ActionStart                  = "Start"
+	ActionEnd                    = "End"
+	ActionPageUp                 = "PageUp"
+	ActionPageDown               = "PageDown"
+	ActionSelectPageUp           = "SelectPageUp"
+	ActionSelectPageDown         = "SelectPageDown"
+	ActionHalfPageUp             = "HalfPageUp"
+	ActionHalfPageDown           = "HalfPageDown"
+	ActionStartOfLine            = "StartOfLine"
+	ActionEndOfLine              = "EndOfLine"
+	ActionToggleRuler            = "ToggleRuler"
+	ActionToggleOverwriteMode    = "ToggleOverwriteMode"
+	ActionEscape                 = "Escape"
+	ActionScrollUp               = "ScrollUp"
+	ActionScrollDown             = "ScrollDown"
+	ActionSpawnMultiCursor       = "SpawnMultiCursor"
+	ActionSpawnMultiCursorSelect = "SpawnMultiCursorSelect"
+	ActionRemoveMultiCursor      = "RemoveMultiCursor"
+	ActionRemoveAllMultiCursors  = "RemoveAllMultiCursors"
+	ActionSkipMultiCursor        = "SkipMultiCursor"
+	ActionJumpToMatchingBrace    = "JumpToMatchingBrace"
+	ActionInsertEnter            = "InsertEnter"
+	ActionUnbindKey              = "UnbindKey"
+)
+
+type KeyDesc struct {
+	KeyCode   tcell.Key
+	Modifiers tcell.ModMask
+	R         rune
+}
+
+// Utility function for parsing key sequences which have the same format as Smidgen keybindings
+func ParseKeySequence(k string) (KeyDesc, bool) {
+	kd, ok := action.ParseKeyboardSequence(k)
+	if !ok {
+		return KeyDesc{}, false
+	}
+	return KeyDesc{
+		KeyCode:   kd.KeyCode,
+		Modifiers: kd.Modifiers,
+		R:         kd.R,
+	}, true
 }

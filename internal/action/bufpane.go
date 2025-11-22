@@ -6,7 +6,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/config"
 	"github.com/sedwards2009/smidgen/internal/display"
 	"github.com/sedwards2009/smidgen/internal/util"
 )
@@ -37,13 +36,11 @@ func BufMouseActionGeneral(a BufMouseAction) PaneMouseAction {
 }
 
 func init() {
-	BufBindings = NewKeyTree()
+	BufBindings = BindingMappingToKeyTree(bufdefaults)
 }
 
 // BufMapEvent maps an event to an action
-func BufMapEvent(k Event, action string) {
-	config.Bindings["buffer"][k.Name()] = action
-
+func BufMapEvent(bufBindings *KeyTree, k Event, action string) {
 	var actionfns []BufAction
 	var names []string
 	var types []byte
@@ -101,11 +98,11 @@ func BufMapEvent(k Event, action string) {
 
 	switch e := k.(type) {
 	case KeyEvent, KeySequenceEvent, RawEvent:
-		BufBindings.RegisterKeyBinding(e, BufKeyActionGeneral(func(h *BufPane) bool {
+		bufBindings.RegisterKeyBinding(e, BufKeyActionGeneral(func(h *BufPane) bool {
 			return bufAction(h, nil)
 		}))
 	case MouseEvent:
-		BufBindings.RegisterMouseBinding(e, BufMouseActionGeneral(bufAction))
+		bufBindings.RegisterMouseBinding(e, BufMouseActionGeneral(bufAction))
 	}
 }
 
@@ -308,6 +305,10 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 			c.NewTrailingWsY = -1
 		}
 	}
+}
+
+func (h *BufPane) SetBindings(b *KeyTree) {
+	h.bindings = b
 }
 
 // Bindings returns the current bindings tree for this buffer.
