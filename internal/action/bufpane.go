@@ -109,17 +109,6 @@ func BufMapEvent(k Event, action string) {
 	}
 }
 
-// BufUnmap unmaps a key or mouse event from any action
-func BufUnmap(k Event) {
-	// TODO
-	// delete(BufKeyBindings, k)
-	//
-	// switch e := k.(type) {
-	// case MouseEvent:
-	// 	delete(BufMouseBindings, e)
-	// }
-}
-
 // The BufPane connects the buffer and the window
 // It provides a cursor (or multiple) and defines a set of actions
 // that can be taken on the buffer
@@ -165,8 +154,6 @@ type BufPane struct {
 	// Should the current multiple cursor selection search based on word or
 	// based on selection (false for selection, true for word)
 	multiWord bool
-
-	splitID uint64
 
 	// remember original location of a search in case the search is canceled
 	searchOrig buffer.Loc
@@ -219,18 +206,6 @@ func (h *BufPane) Resize(width, height int) {
 	}
 }
 
-// func (h *BufPane) ResizePane(size int) {
-// 	n := h.tab.GetNode(h.splitID)
-// 	n.ResizeSplit(size)
-// 	h.tab.Resize()
-// }
-
-func (h *BufPane) resetMouse() {
-	for me := range h.mousePressed {
-		delete(h.mousePressed, me)
-	}
-}
-
 // GotoLoc moves the cursor to a new location and adjusts the view accordingly.
 // Use GotoLoc when the new location may be far away from the current location.
 func (h *BufPane) GotoLoc(loc buffer.Loc) {
@@ -266,16 +241,6 @@ func (h *BufPane) initialRelocate() {
 	}
 	v.StartCol = 0
 	h.Relocate()
-}
-
-// ID returns this pane's split id.
-func (h *BufPane) ID() uint64 {
-	return h.splitID
-}
-
-// SetID sets the split ID of this pane.
-func (h *BufPane) SetID(i uint64) {
-	h.splitID = i
 }
 
 // Name returns the BufPane's name.

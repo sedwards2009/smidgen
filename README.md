@@ -4,7 +4,7 @@ This is the core text editor part of [micro](https://github.com/zyedidia/micro) 
 
 This is the same idea as [femto](https://github.com/pgavlin/femto) except redone from scratch using the version of micro from 2025-10-27.
 
-Note: This is still in early and rapid development. The primary purpose of Smidgen is to power my little text editor (Dinky)[https://github.com/sedwards2009/dinky].
+Note: This is still in early and rapid development. The primary purpose of Smidgen is to power my little text editor [Dinky](https://github.com/sedwards2009/dinky).
 
 ## API
 

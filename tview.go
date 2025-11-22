@@ -14,11 +14,19 @@ type Buffer struct {
 	*buffer.Buffer
 }
 
+type Cursor struct {
+	*buffer.Cursor
+}
+
 type View struct {
 	*tview.Box
 	buffer    *buffer.Buffer
 	bufWindow *display.BufWindow
 	bufPane   *action.BufPane
+}
+
+type ActionController struct {
+	*action.BufPane
 }
 
 func NewView(app *tview.Application, buffer *Buffer) *View {
@@ -72,6 +80,22 @@ func (v *View) SetColorscheme(cs Colorscheme) {
 	v.buffer.UpdateRules()
 }
 
+func (v *View) Buffer() *Buffer {
+	return &Buffer{v.buffer}
+}
+
+func (v *View) Cursor() *Cursor {
+	return &Cursor{v.bufPane.Cursor}
+}
+
+func (v *View) Relocate() {
+	v.bufWindow.Relocate()
+}
+
+func (v *View) ActionController() *ActionController {
+	return &ActionController{v.bufPane}
+}
+
 func NewBufferFromString(content string, path string) *Buffer {
 	return &Buffer{
 		Buffer: buffer.NewBufferFromString(content, path),
@@ -79,6 +103,10 @@ func NewBufferFromString(content string, path string) *Buffer {
 }
 
 type Colorscheme config.Colorscheme
+
+func (colorscheme Colorscheme) GetColor(color string) tcell.Style {
+	return config.Colorscheme(colorscheme).GetColor(color)
+}
 
 func LoadInternalColorscheme(name string) (Colorscheme, bool) {
 	data, err := runtime.Asset("runtime/colorschemes/" + name + ".micro")
@@ -94,4 +122,15 @@ func ParseColorscheme(data string) Colorscheme {
 
 func init() {
 	config.InitRuntimeFiles()
+}
+
+type Action func() bool
+
+func (v *View) MapActionNameToAction(name string) Action {
+	if f, ok := action.BufKeyActions[name]; ok {
+		return func() bool {
+			return f(v.bufPane)
+		}
+	}
+	return nil
 }
