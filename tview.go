@@ -3,16 +3,12 @@ package smidgen
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/sedwards2009/smidgen/internal/action"
-	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/config"
-	"github.com/sedwards2009/smidgen/internal/display"
+	"github.com/sedwards2009/smidgen/micro/action"
+	"github.com/sedwards2009/smidgen/micro/buffer"
+	"github.com/sedwards2009/smidgen/micro/config"
+	"github.com/sedwards2009/smidgen/micro/display"
 	"github.com/sedwards2009/smidgen/runtime"
 )
-
-type Buffer struct {
-	*buffer.Buffer
-}
 
 type Cursor struct {
 	*buffer.Cursor
@@ -29,11 +25,11 @@ type ActionController struct {
 	*action.BufPane
 }
 
-func NewView(app *tview.Application, buffer *Buffer) *View {
+func NewView(app *tview.Application, buffer *buffer.Buffer) *View {
 	v := &View{
 		Box:       tview.NewBox(),
-		buffer:    buffer.Buffer,
-		bufWindow: display.NewBufWindow(0, 0, 10, 10, buffer.Buffer),
+		buffer:    buffer,
+		bufWindow: display.NewBufWindow(0, 0, 10, 10, buffer),
 	}
 
 	buffer.RegisterRedrawCallback(func() {
@@ -79,8 +75,8 @@ func (v *View) SetColorscheme(cs Colorscheme) {
 	v.buffer.UpdateRules()
 }
 
-func (v *View) Buffer() *Buffer {
-	return &Buffer{v.buffer}
+func (v *View) Buffer() *buffer.Buffer {
+	return v.buffer
 }
 
 func (v *View) Cursor() *Cursor {
@@ -107,10 +103,12 @@ func (v *View) SetKeybindings(keybindings Keybindings) {
 	v.bufPane.SetBindings(keybindings.KeyTree)
 }
 
-func NewBufferFromString(content string, path string) *Buffer {
-	return &Buffer{
-		Buffer: buffer.NewBufferFromString(content, path),
-	}
+func (v *View) GoToLoc(loc buffer.Loc) {
+	v.bufPane.GotoLoc(loc)
+}
+
+func NewBufferFromString(content string, path string) *buffer.Buffer {
+	return buffer.NewBufferFromString(content, path)
 }
 
 type Colorscheme config.Colorscheme

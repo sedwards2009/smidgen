@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/display"
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/buffer"
+	"github.com/sedwards2009/smidgen/micro/display"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 type BufAction any
@@ -221,6 +221,11 @@ func (h *BufPane) GotoLoc(loc buffer.Loc) {
 		v.StartCol = 0
 	}
 	h.Relocate()
+}
+
+func (h *BufPane) SetStartLine(sloc display.SLoc) {
+	v := h.GetView()
+	v.StartLine = sloc
 }
 
 func (h *BufPane) initialRelocate() {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/util"
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
 )
 

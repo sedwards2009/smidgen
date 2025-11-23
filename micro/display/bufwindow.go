@@ -6,9 +6,9 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/config"
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/buffer"
+	"github.com/sedwards2009/smidgen/micro/config"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // The BufWindow provides a way of displaying a certain section of a buffer.

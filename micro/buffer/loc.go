@@ -1,7 +1,7 @@
 package buffer
 
 import (
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // Loc stores a location

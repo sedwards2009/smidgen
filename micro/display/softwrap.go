@@ -2,8 +2,8 @@ package display
 
 import (
 	runewidth "github.com/mattn/go-runewidth"
-	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/buffer"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // SLoc represents a vertical scrolling location, i.e. a location of a visual line

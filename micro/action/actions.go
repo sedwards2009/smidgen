@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/sedwards2009/smidgen/internal/buffer"
-	"github.com/sedwards2009/smidgen/internal/clipboard"
-	"github.com/sedwards2009/smidgen/internal/config"
-	"github.com/sedwards2009/smidgen/internal/display"
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/buffer"
+	"github.com/sedwards2009/smidgen/micro/clipboard"
+	"github.com/sedwards2009/smidgen/micro/config"
+	"github.com/sedwards2009/smidgen/micro/display"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // ScrollUp is not an action

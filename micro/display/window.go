@@ -2,7 +2,7 @@ package display
 
 import (
 	"github.com/gdamore/tcell/v2"
-	"github.com/sedwards2009/smidgen/internal/buffer"
+	"github.com/sedwards2009/smidgen/micro/buffer"
 )
 
 type View struct {

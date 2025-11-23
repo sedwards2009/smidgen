@@ -1,8 +1,8 @@
 package buffer
 
 import (
-	"github.com/sedwards2009/smidgen/internal/clipboard"
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/clipboard"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // InBounds returns whether the given location is a valid character position in the given buffer

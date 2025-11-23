@@ -7,9 +7,10 @@ import (
 
 	"github.com/rivo/tview"
 	"github.com/sedwards2009/smidgen"
+	"github.com/sedwards2009/smidgen/micro/buffer"
 )
 
-func saveBuffer(b *smidgen.Buffer, path string) error {
+func saveBuffer(b *buffer.Buffer, path string) error {
 	return ioutil.WriteFile(path, b.Bytes(), 0600)
 }
 

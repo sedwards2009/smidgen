@@ -16,10 +16,10 @@ import (
 
 	// luar "layeh.com/gopher-luar"
 
-	"github.com/sedwards2009/smidgen/internal/config"
-	// ulua "github.com/sedwards2009/smidgen/internal/lua"
+	"github.com/sedwards2009/smidgen/micro/config"
+	// ulua "github.com/sedwards2009/smidgen/micro/lua"
 
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/util"
 	"github.com/sedwards2009/smidgen/pkg/highlight"
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
 	"golang.org/x/text/encoding"

@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"reflect"
 
-	"github.com/sedwards2009/smidgen/internal/config"
+	"github.com/sedwards2009/smidgen/micro/config"
 	"golang.org/x/text/encoding/htmlindex"
 	"golang.org/x/text/encoding/unicode"
 )

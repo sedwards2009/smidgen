@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"unicode/utf8"
 
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/util"
 )
 
 // We want "^" and "$" to match only the beginning/end of a line, not the

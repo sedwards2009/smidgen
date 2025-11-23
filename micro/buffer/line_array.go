@@ -6,7 +6,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/sedwards2009/smidgen/internal/util"
+	"github.com/sedwards2009/smidgen/micro/util"
 	"github.com/sedwards2009/smidgen/pkg/highlight"
 )
 
