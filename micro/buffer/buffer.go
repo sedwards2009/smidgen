@@ -7,18 +7,12 @@ import (
 	"errors"
 	"io"
 	"log"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	// luar "layeh.com/gopher-luar"
-
 	"github.com/sedwards2009/smidgen/micro/config"
-	// ulua "github.com/sedwards2009/smidgen/micro/lua"
-
 	"github.com/sedwards2009/smidgen/micro/util"
 	"github.com/sedwards2009/smidgen/pkg/highlight"
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
@@ -36,15 +30,8 @@ const LargeFileThreshold = 50000
 // that have the same file open
 type SharedBuffer struct {
 	*LineArray
-	// Stores the last modification time of the file the buffer is pointing to
-	ModTime time.Time
 
-	// Path to the file on disk
 	Path string
-	// Absolute path to the file on disk
-	AbsPath string
-	// Name of the buffer on the status line
-	name string
 
 	Settings map[string]any
 
@@ -105,12 +92,11 @@ func (b *SharedBuffer) remove(start, end Loc) []byte {
 	return b.LineArray.remove(start, end)
 }
 
-func (b *SharedBuffer) setModified() {
+func (b *SharedBuffer) setModified(isModified bool) {
 	if b.Settings["fastdirty"].(bool) {
-		b.isModified = true
+		b.isModified = isModified
 	} else {
 		var buff [md5.Size]byte
-
 		b.calcHash(&buff)
 		b.isModified = buff != b.origHash
 	}
@@ -172,12 +158,6 @@ type Command struct {
 	SearchAfterStart bool
 }
 
-var emptyCommand = Command{
-	StartCursor:      Loc{-1, -1},
-	SearchRegex:      "",
-	SearchAfterStart: false,
-}
-
 // Buffer stores the main information about a currently open file including
 // the actual text (in a LineArray), the undo/redo stack (in an EventHandler)
 // all the cursors, the syntax highlighting info, the settings for the buffer
@@ -219,77 +199,6 @@ type Buffer struct {
 	OverwriteMode bool
 }
 
-// NewBufferFromFileWithCommand opens a new buffer with a given command
-// If cmd.StartCursor is {-1, -1} the location does not overwrite what the cursor location
-// would otherwise be (start of file
-/*
-func NewBufferFromFileWithCommand(path string, btype BufType, cmd Command) (*Buffer, error) {
-	var err error
-	filename := path
-	if config.GetGlobalOption("parsecursor").(bool) && cmd.StartCursor.X == -1 && cmd.StartCursor.Y == -1 {
-		var cursorPos []string
-		filename, cursorPos = util.GetPathAndCursorPosition(filename)
-		cmd.StartCursor, err = ParseCursorLocation(cursorPos)
-		if err != nil {
-			cmd.StartCursor = Loc{-1, -1}
-		}
-	}
-
-	filename, err = util.ReplaceHome(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	fileInfo, serr := os.Stat(filename)
-	if serr != nil && !errors.Is(serr, fs.ErrNotExist) {
-		return nil, serr
-	}
-	if serr == nil && fileInfo.IsDir() {
-		return nil, errors.New("Error: " + filename + " is a directory and cannot be opened")
-	}
-	if serr == nil && !fileInfo.Mode().IsRegular() {
-		return nil, errors.New("Error: " + filename + " is not a regular file and cannot be opened")
-	}
-
-	f, err := os.OpenFile(filename, os.O_WRONLY, 0)
-	readonly := errors.Is(err, fs.ErrPermission)
-	f.Close()
-
-	file, err := os.Open(filename)
-	if err == nil {
-		defer file.Close()
-	}
-
-	var buf *Buffer
-	if errors.Is(err, fs.ErrNotExist) {
-		// File does not exist -- create an empty buffer with that name
-		buf = NewBufferFromString("", filename, btype)
-	} else if err != nil {
-		return nil, err
-	} else {
-		buf = NewBuffer(file, util.FSize(file), filename, btype, cmd)
-		if buf == nil {
-			return nil, errors.New("could not open file")
-		}
-	}
-
-	if readonly && prompt != nil {
-		prompt.Message(fmt.Sprintf("Warning: file is readonly - %s will be attempted when saving", config.GlobalSettings["sucmd"].(string)))
-		// buf.SetOptionNative("readonly", true)
-	}
-
-	return buf, nil
-}
-*/
-
-// NewBufferFromFile opens a new buffer using the given path
-// It will also automatically handle `~`, and line/column with filename:l:c
-// It will return an empty buffer if the path does not exist
-// and an error if the file is a directory
-// func NewBufferFromFile(path string, btype BufType) (*Buffer, error) {
-// 	return NewBufferFromFileWithCommand(path, btype, emptyCommand)
-// }
-
 // NewBufferFromStringWithCommand creates a new buffer containing the given string
 // with a cursor loc and a search text
 func NewBufferFromStringWithCommand(text, path string, screenRedrawCallback func()) *Buffer {
@@ -307,22 +216,12 @@ func NewBufferFromString(text, path string) *Buffer {
 // Places the cursor at startcursor. If startcursor is -1, -1 places the
 // cursor at an autodetected location (based on savecursor or :LINE:COL)
 func NewBuffer(r io.Reader, size int64, path string) *Buffer {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		absPath = path
-	}
-
 	b := new(Buffer)
-
 	b.SharedBuffer = new(SharedBuffer)
-
-	b.AbsPath = absPath
+	b.Settings = config.DefaultCommonSettings()
 	b.Path = path
 
-	b.Settings = config.DefaultCommonSettings()
-	// b.LocalSettings = make(map[string]bool)
-	// config.UpdatePathGlobLocals(b.Settings, absPath)
-
+	var err error
 	b.encoding, err = htmlindex.Get(b.Settings["encoding"].(string))
 	if err != nil {
 		b.encoding = unicode.UTF8
@@ -349,9 +248,6 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 	b.LineArray = NewLineArray(uint64(size), ff, reader)
 
 	b.EventHandler = NewEventHandler(b.SharedBuffer, b.cursors)
-
-	// The last time this file was modified
-	b.UpdateModTime()
 
 	switch b.Endings {
 	case FFUnix:
@@ -380,27 +276,6 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 	return b
 }
 
-// GetName returns the name that should be displayed in the statusline
-// for this buffer
-func (b *Buffer) GetName() string {
-	name := b.name
-	if name == "" {
-		if b.Path == "" {
-			return "No name"
-		}
-		name = b.Path
-	}
-	if b.Settings["basename"].(bool) {
-		return filepath.Base(name)
-	}
-	return name
-}
-
-// SetName changes the name for this buffer
-func (b *Buffer) SetName(s string) {
-	b.name = s
-}
-
 // Insert inserts the given string of text at the start location
 func (b *Buffer) Insert(start Loc, text string) {
 	b.EventHandler.cursors = b.cursors
@@ -418,57 +293,6 @@ func (b *Buffer) Remove(start, end Loc) {
 // FileType returns the buffer's filetype
 func (b *Buffer) FileType() string {
 	return b.Settings["filetype"].(string)
-}
-
-// ExternallyModified returns whether the file being edited has
-// been modified by some external process
-func (b *Buffer) ExternallyModified() bool {
-	modTime, err := util.GetModTime(b.Path)
-	if err == nil {
-		return modTime != b.ModTime
-	}
-	return false
-}
-
-// UpdateModTime updates the modtime of this file
-func (b *Buffer) UpdateModTime() (err error) {
-	b.ModTime, err = util.GetModTime(b.Path)
-	return
-}
-
-// ReOpen reloads the current buffer from disk
-func (b *Buffer) ReOpen() error {
-	file, err := os.Open(b.Path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	enc, err := htmlindex.Get(b.Settings["encoding"].(string))
-	if err != nil {
-		return err
-	}
-
-	reader := bufio.NewReader(transform.NewReader(file, enc.NewDecoder()))
-	data, err := io.ReadAll(reader)
-	txt := string(data)
-
-	if err != nil {
-		return err
-	}
-	b.EventHandler.ApplyDiff(txt)
-
-	err = b.UpdateModTime()
-	if !b.Settings["fastdirty"].(bool) {
-		if len(data) > LargeFileThreshold {
-			b.Settings["fastdirty"] = true
-		} else {
-			b.calcHash(&b.origHash)
-		}
-	}
-	b.isModified = false
-	b.RelocateCursors()
-	return err
 }
 
 // RelocateCursors relocates all cursors (makes sure they are in the buffer)

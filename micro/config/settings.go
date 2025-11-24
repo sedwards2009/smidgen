@@ -41,7 +41,6 @@ var OptionChoices = map[string][]string{
 // default values
 var defaultCommonSettings = map[string]any{
 	"autoindent":      true,
-	"basename":        false,
 	"colorcolumn":     float64(0),
 	"cursorline":      true,
 	"detectlimit":     float64(100),

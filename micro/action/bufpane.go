@@ -245,15 +245,6 @@ func (h *BufPane) initialRelocate() {
 	h.Relocate()
 }
 
-// Name returns the BufPane's name.
-func (h *BufPane) Name() string {
-	n := h.Buf.GetName()
-	if h.Buf.Modified() {
-		n += " +"
-	}
-	return n
-}
-
 // HandleEvent executes the tcell event properly
 func (h *BufPane) HandleEvent(event tcell.Event) {
 	switch e := event.(type) {
@@ -413,11 +404,6 @@ func (h *BufPane) DoRuneInsert(r rune) {
 	}
 }
 
-// Close this pane.
-// func (h *BufPane) Close() {
-// 	h.Buf.Close()
-// }
-
 // SetActive marks this pane as active.
 func (h *BufPane) SetActive(b bool) {
 	if h.IsActive() == b {
@@ -471,37 +457,29 @@ var BufKeyActions = map[string]BufKeyAction{
 	"Backspace":                 (*BufPane).Backspace,
 	"Delete":                    (*BufPane).Delete,
 	"InsertTab":                 (*BufPane).InsertTab,
-	// "Save":                      (*BufPane).Save,
-	// "SaveAll":                   (*BufPane).SaveAll,
-	// "SaveAs":                    (*BufPane).SaveAs,
-	// "Find":                      (*BufPane).Find,
-	// "FindLiteral":               (*BufPane).FindLiteral,
-	// "FindNext":                  (*BufPane).FindNext,
-	// "FindPrevious":              (*BufPane).FindPrevious,
-	"DiffNext":         (*BufPane).DiffNext,
-	"DiffPrevious":     (*BufPane).DiffPrevious,
-	"Center":           (*BufPane).Center,
-	"Undo":             (*BufPane).Undo,
-	"Redo":             (*BufPane).Redo,
-	"Copy":             (*BufPane).Copy,
-	"CopyLine":         (*BufPane).CopyLine,
-	"Cut":              (*BufPane).Cut,
-	"CutLine":          (*BufPane).CutLine,
-	"Duplicate":        (*BufPane).Duplicate,
-	"DuplicateLine":    (*BufPane).DuplicateLine,
-	"DeleteLine":       (*BufPane).DeleteLine,
-	"MoveLinesUp":      (*BufPane).MoveLinesUp,
-	"MoveLinesDown":    (*BufPane).MoveLinesDown,
-	"IndentSelection":  (*BufPane).IndentSelection,
-	"OutdentSelection": (*BufPane).OutdentSelection,
+	"DiffNext":                  (*BufPane).DiffNext,
+	"DiffPrevious":              (*BufPane).DiffPrevious,
+	"Center":                    (*BufPane).Center,
+	"Undo":                      (*BufPane).Undo,
+	"Redo":                      (*BufPane).Redo,
+	"Copy":                      (*BufPane).Copy,
+	"CopyLine":                  (*BufPane).CopyLine,
+	"Cut":                       (*BufPane).Cut,
+	"CutLine":                   (*BufPane).CutLine,
+	"Duplicate":                 (*BufPane).Duplicate,
+	"DuplicateLine":             (*BufPane).DuplicateLine,
+	"DeleteLine":                (*BufPane).DeleteLine,
+	"MoveLinesUp":               (*BufPane).MoveLinesUp,
+	"MoveLinesDown":             (*BufPane).MoveLinesDown,
+	"IndentSelection":           (*BufPane).IndentSelection,
+	"OutdentSelection":          (*BufPane).OutdentSelection,
 	// "Autocomplete":          (*BufPane).Autocomplete,
 	// "CycleAutocompleteBack": (*BufPane).CycleAutocompleteBack,
-	"OutdentLine":  (*BufPane).OutdentLine,
-	"IndentLine":   (*BufPane).IndentLine,
-	"Paste":        (*BufPane).Paste,
-	"PastePrimary": (*BufPane).PastePrimary,
-	"SelectAll":    (*BufPane).SelectAll,
-	// "OpenFile":                  (*BufPane).OpenFile,
+	"OutdentLine":       (*BufPane).OutdentLine,
+	"IndentLine":        (*BufPane).IndentLine,
+	"Paste":             (*BufPane).Paste,
+	"PastePrimary":      (*BufPane).PastePrimary,
+	"SelectAll":         (*BufPane).SelectAll,
 	"Start":             (*BufPane).Start,
 	"End":               (*BufPane).End,
 	"PageUp":            (*BufPane).PageUp,
@@ -514,10 +492,8 @@ var BufKeyActions = map[string]BufKeyAction{
 	"StartOfTextToggle": (*BufPane).StartOfTextToggle,
 	"StartOfLine":       (*BufPane).StartOfLine,
 	"EndOfLine":         (*BufPane).EndOfLine,
-	// "ToggleHelp":                (*BufPane).ToggleHelp,
-	// "ToggleKeyMenu":             (*BufPane).ToggleKeyMenu,
-	"ToggleDiffGutter": (*BufPane).ToggleDiffGutter,
-	"ToggleRuler":      (*BufPane).ToggleRuler,
+	"ToggleDiffGutter":  (*BufPane).ToggleDiffGutter,
+	"ToggleRuler":       (*BufPane).ToggleRuler,
 	// "ToggleHighlightSearch":     (*BufPane).ToggleHighlightSearch,
 	// "UnhighlightSearch":         (*BufPane).UnhighlightSearch,
 	// "ResetSearch":               (*BufPane).ResetSearch,
@@ -526,24 +502,8 @@ var BufKeyActions = map[string]BufKeyAction{
 	// "CommandMode":               (*BufPane).CommandMode,
 	"ToggleOverwriteMode": (*BufPane).ToggleOverwriteMode,
 	"Escape":              (*BufPane).Escape,
-	// "Quit":                      (*BufPane).Quit,
-	// "QuitAll":                   (*BufPane).QuitAll,
-	// "ForceQuit":                 (*BufPane).ForceQuit,
-	// "AddTab":                    (*BufPane).AddTab,
-	// "PreviousTab":               (*BufPane).PreviousTab,
-	// "NextTab":                   (*BufPane).NextTab,
-	// "FirstTab":                  (*BufPane).FirstTab,
-	// "LastTab":                   (*BufPane).LastTab,
-	// "NextSplit":                 (*BufPane).NextSplit,
-	// "PreviousSplit":             (*BufPane).PreviousSplit,
-	// "FirstSplit":                (*BufPane).FirstSplit,
-	// "LastSplit":                 (*BufPane).LastSplit,
-	// "Unsplit":                   (*BufPane).Unsplit,
-	// "VSplit":                    (*BufPane).VSplitAction,
-	// "HSplit":                    (*BufPane).HSplitAction,
 	// "ToggleMacro": (*BufPane).ToggleMacro,
 	// "PlayMacro":   (*BufPane).PlayMacro,
-	// "Suspend":                   (*BufPane).Suspend,
 	"ScrollUp":               (*BufPane).ScrollUpAction,
 	"ScrollDown":             (*BufPane).ScrollDownAction,
 	"SpawnMultiCursor":       (*BufPane).SpawnMultiCursor,

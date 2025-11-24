@@ -8,5 +8,4 @@ import (
 type Pane interface {
 	Handler
 	display.Window
-	Name() string
 }
