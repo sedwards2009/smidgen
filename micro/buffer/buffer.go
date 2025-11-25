@@ -92,13 +92,20 @@ func (b *SharedBuffer) remove(start, end Loc) []byte {
 	return b.LineArray.remove(start, end)
 }
 
-func (b *SharedBuffer) setModified(isModified bool) {
+func (b *SharedBuffer) setModified() {
 	if b.Settings["fastdirty"].(bool) {
-		b.isModified = isModified
+		b.isModified = true
 	} else {
 		var buff [md5.Size]byte
 		b.calcHash(&buff)
 		b.isModified = buff != b.origHash
+	}
+}
+
+func (b *SharedBuffer) ClearModified() {
+	b.isModified = false
+	if !b.Settings["fastdirty"].(bool) {
+		b.calcHash(&b.origHash)
 	}
 }
 

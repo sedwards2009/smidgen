@@ -10,10 +10,6 @@ import (
 	"github.com/sedwards2009/smidgen/runtime"
 )
 
-type Cursor struct {
-	*buffer.Cursor
-}
-
 type View struct {
 	*tview.Box
 	buffer    *buffer.Buffer
@@ -79,8 +75,8 @@ func (v *View) Buffer() *buffer.Buffer {
 	return v.buffer
 }
 
-func (v *View) Cursor() *Cursor {
-	return &Cursor{v.bufPane.Cursor}
+func (v *View) Cursor() *buffer.Cursor {
+	return v.bufPane.Cursor
 }
 
 func (v *View) Relocate() {
