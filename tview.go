@@ -210,6 +210,9 @@ const (
 	ActionJumpToMatchingBrace    = "JumpToMatchingBrace"
 	ActionInsertEnter            = "InsertEnter"
 	ActionUnbindKey              = "UnbindKey"
+	ActionMousePress             = "MousePress"
+	ActionMouseDrag              = "MouseDrag"
+	ActionMouseRelease           = "MouseRelease"
 )
 
 type KeyDesc struct {
