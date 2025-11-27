@@ -366,6 +366,11 @@ func (w *BufWindow) showFakeCursorMulti(screen tcell.Screen, x int, y int) {
 
 // displayBuffer draws the buffer being shown in this window on the screen.Screen
 func (w *BufWindow) displayBuffer(screen tcell.Screen) {
+	if w.active {
+		// We are actice, so we control the cursor
+		screen.HideCursor()
+	}
+
 	b := w.Buf
 
 	if w.Height <= 0 || w.Width <= 0 {
