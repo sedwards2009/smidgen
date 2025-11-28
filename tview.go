@@ -1,6 +1,8 @@
 package smidgen
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/sedwards2009/smidgen/micro/action"
@@ -123,6 +125,32 @@ func LoadInternalColorscheme(name string) (Colorscheme, bool) {
 
 func ParseColorscheme(data string) Colorscheme {
 	return Colorscheme(config.ParseColorscheme(data))
+}
+
+func ListColorschemes() []string {
+	files, err := runtime.AssetDir("runtime/colorschemes")
+	if err != nil {
+		return nil
+	}
+	var schemes []string
+	for _, f := range files {
+		schemes = append(schemes, f[:len(f)-6]) // Remove .micro extension
+	}
+	return schemes
+}
+
+func ListSyntaxes() []string {
+	files, err := runtime.AssetDir("runtime/syntax")
+	if err != nil {
+		return nil
+	}
+	var syntaxes []string
+	for _, f := range files {
+		if strings.HasSuffix(f, ".yaml") {
+			syntaxes = append(syntaxes, f[:len(f)-5]) // Remove .yaml extension
+		}
+	}
+	return syntaxes
 }
 
 func init() {
