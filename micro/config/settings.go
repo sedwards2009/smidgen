@@ -68,7 +68,6 @@ var defaultCommonSettings = map[string]any{
 	"showchars":       "",
 	"smartpaste":      true,
 	"softwrap":        false,
-	"statusline":      true,
 	"syntax":          true,
 	"tabmovement":     false,
 	"tabsize":         float64(4),

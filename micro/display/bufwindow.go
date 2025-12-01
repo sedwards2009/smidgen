@@ -20,8 +20,6 @@ type BufWindow struct {
 
 	active bool
 
-	// sline *StatusLine
-
 	bufWidth         int
 	bufHeight        int
 	gutterOffset     int
@@ -36,8 +34,6 @@ func NewBufWindow(x, y, width, height int, buf *buffer.Buffer) *BufWindow {
 	w.X, w.Y, w.Width, w.Height = x, y, width, height
 	w.SetBuffer(buf)
 	w.active = true
-
-	// w.sline = NewStatusLine(w)
 
 	return w
 }
@@ -61,8 +57,7 @@ func (w *BufWindow) SetBuffer(b *buffer.Buffer) {
 			}
 		}
 
-		if option == "diffgutter" || option == "ruler" || option == "scrollbar" ||
-			option == "statusline" {
+		if option == "diffgutter" || option == "ruler" || option == "scrollbar" {
 			w.updateDisplayInfo()
 			w.Relocate()
 		}
@@ -102,7 +97,7 @@ func (w *BufWindow) IsActive() bool {
 
 // BufView returns the width, height and x,y location of the actual buffer.
 // It is not exactly the same as the whole window which also contains gutter,
-// ruler, scrollbar and statusline.
+// ruler, scrollbar.
 func (w *BufWindow) BufView() View {
 	return View{
 		X:         w.X + w.gutterOffset,
@@ -116,23 +111,7 @@ func (w *BufWindow) BufView() View {
 
 func (w *BufWindow) updateDisplayInfo() {
 	b := w.Buf
-
-	// w.drawDivider = false
-	// if !b.Settings["statusline"].(bool) {
-	// _, h := screen.Size()
-	// infoY := h
-	// if config.GetGlobalOption("infobar").(bool) {
-	// 	infoY--
-	// }
-	// if w.Y+w.Height != infoY {
-	// 	w.drawDivider = true
-	// }
-	// }
-
 	w.bufHeight = w.Height
-	// if b.Settings["statusline"].(bool) || w.drawDivider {
-	// 	w.bufHeight--
-	// }
 
 	scrollbarWidth := 0
 	if w.Buf.Settings["scrollbar"].(bool) && w.Buf.LinesNum() > w.Height && w.Width > 0 {
@@ -812,6 +791,14 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 			break
 		}
 	}
+
+	// Fill in any blank lines at the bottom of the editor
+	style := w.Colorscheme.GetDefault()
+	for y := vloc.Y + 1; y < w.Height; y++ {
+		for x := 0; x < w.Width; x++ {
+			screen.SetContent(w.X+x, y+w.Y, ' ', nil, style)
+		}
+	}
 }
 
 func (w *BufWindow) displayScrollBar(screen tcell.Screen) {
@@ -836,11 +823,9 @@ func (w *BufWindow) displayScrollBar(screen tcell.Screen) {
 	}
 }
 
-// Display displays the buffer and the statusline
+// Display displays the buffer
 func (w *BufWindow) Display(screen tcell.Screen) {
 	w.updateDisplayInfo()
-
-	// w.displayStatusLine()
 	w.displayScrollBar(screen)
 	w.displayBuffer(screen)
 }

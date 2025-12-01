@@ -37,6 +37,7 @@ func NewView(app *tview.Application, buffer *buffer.Buffer) *View {
 	})
 
 	v.bufPane = action.NewBufPane(v.buffer, v.bufWindow)
+	v.buffer.UpdateRules()
 	return v
 }
 
