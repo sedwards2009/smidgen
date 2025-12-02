@@ -18,8 +18,6 @@ type BufWindow struct {
 	// Buffer being shown in this window
 	Buf *buffer.Buffer
 
-	active bool
-
 	bufWidth         int
 	bufHeight        int
 	gutterOffset     int
@@ -33,8 +31,6 @@ func NewBufWindow(x, y, width, height int, buf *buffer.Buffer) *BufWindow {
 	w.View = new(View)
 	w.X, w.Y, w.Width, w.Height = x, y, width, height
 	w.SetBuffer(buf)
-	w.active = true
-
 	return w
 }
 
@@ -83,16 +79,6 @@ func (w *BufWindow) Resize(width, height int) {
 	w.updateDisplayInfo()
 
 	w.Relocate()
-}
-
-// SetActive marks the window as active.
-func (w *BufWindow) SetActive(b bool) {
-	w.active = b
-}
-
-// IsActive returns true if this window is active.
-func (w *BufWindow) IsActive() bool {
-	return w.active
 }
 
 // BufView returns the width, height and x,y location of the actual buffer.
@@ -325,8 +311,8 @@ func (w *BufWindow) getStyle(style tcell.Style, bloc buffer.Loc) (tcell.Style, b
 	return style, false
 }
 
-func (w *BufWindow) showCursor(screen tcell.Screen, x, y int, main bool) {
-	if w.active {
+func (w *BufWindow) showCursor(screen tcell.Screen, hasFocus bool, x, y int, main bool) {
+	if hasFocus {
 		if main {
 			screen.ShowCursor(x, y)
 		} else {
@@ -344,8 +330,8 @@ func (w *BufWindow) showFakeCursorMulti(screen tcell.Screen, x int, y int) {
 }
 
 // displayBuffer draws the buffer being shown in this window on the screen.Screen
-func (w *BufWindow) displayBuffer(screen tcell.Screen) {
-	if w.active {
+func (w *BufWindow) displayBuffer(screen tcell.Screen, hasFocus bool) {
+	if hasFocus {
 		// We are actice, so we control the cursor
 		screen.HideCursor()
 	}
@@ -449,7 +435,7 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 
 		currentLine := false
 		for _, c := range cursors {
-			if !c.HasSelection() && bloc.Y == c.Y && w.active {
+			if !c.HasSelection() && bloc.Y == c.Y && hasFocus {
 				currentLine = true
 				break
 			}
@@ -615,7 +601,7 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 						}
 					}
 
-					if b.Settings["cursorline"].(bool) && w.active && !preservebg &&
+					if b.Settings["cursorline"].(bool) && hasFocus && !preservebg &&
 						!c.HasSelection() && c.Y == bloc.Y {
 						if s, ok := w.Colorscheme["cursor-line"]; ok {
 							fg, _, _ := s.Decompose()
@@ -637,7 +623,7 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 			if showcursor {
 				for _, c := range cursors {
 					if c.X == bloc.X && c.Y == bloc.Y && !c.HasSelection() {
-						w.showCursor(screen, w.X+vloc.X, w.Y+vloc.Y, c.Num == 0)
+						w.showCursor(screen, hasFocus, w.X+vloc.X, w.Y+vloc.Y, c.Num == 0)
 					}
 				}
 			}
@@ -760,7 +746,7 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen) {
 
 		style := w.Colorscheme.GetDefault()
 		for _, c := range cursors {
-			if b.Settings["cursorline"].(bool) && w.active &&
+			if b.Settings["cursorline"].(bool) && hasFocus &&
 				!c.HasSelection() && c.Y == bloc.Y {
 				if s, ok := w.Colorscheme["cursor-line"]; ok {
 					fg, _, _ := s.Decompose()
@@ -824,8 +810,8 @@ func (w *BufWindow) displayScrollBar(screen tcell.Screen) {
 }
 
 // Display displays the buffer
-func (w *BufWindow) Display(screen tcell.Screen) {
+func (w *BufWindow) Display(screen tcell.Screen, hasFocus bool) {
 	w.updateDisplayInfo()
 	w.displayScrollBar(screen)
-	w.displayBuffer(screen)
+	w.displayBuffer(screen, hasFocus)
 }

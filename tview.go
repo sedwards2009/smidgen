@@ -48,12 +48,15 @@ func (v *View) Draw(screen tcell.Screen) {
 	v.bufWindow.X = innerX
 	v.bufWindow.Y = innerY
 	v.bufWindow.Resize(width, height)
-	v.bufWindow.Display(screen)
+	v.bufWindow.Display(screen, v.HasFocus())
 }
 
 func (v *View) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return v.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-		v.bufPane.HandleEvent(event)
+		takeFocus := func() {
+			setFocus(v)
+		}
+		v.bufPane.HandleEvent(event, takeFocus)
 	})
 }
 
@@ -64,7 +67,11 @@ func (v *View) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 		if !v.InRect(x, y) {
 			return false, nil
 		}
-		v.bufPane.HandleEvent(event)
+
+		takeFocus := func() {
+			setFocus(v)
+		}
+		v.bufPane.HandleEvent(event, takeFocus)
 		return true, nil
 	})
 }

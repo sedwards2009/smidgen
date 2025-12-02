@@ -183,5 +183,5 @@ func ConstructEvent(event tcell.Event) (Event, error) {
 // A Handler will take a tcell event and execute it
 // appropriately
 type Handler interface {
-	HandleEvent(tcell.Event)
+	HandleEvent(tcell.Event, func())
 }

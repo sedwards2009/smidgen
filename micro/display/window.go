@@ -19,14 +19,12 @@ type View struct {
 }
 
 type Window interface {
-	Display(screen tcell.Screen)
+	Display(screen tcell.Screen, hasFocus bool)
 	Relocate() bool
 	GetView() *View
 	SetView(v *View)
 	LocFromVisual(vloc buffer.Loc) buffer.Loc
 	Resize(w, h int)
-	SetActive(b bool)
-	IsActive() bool
 }
 
 type BWindow interface {

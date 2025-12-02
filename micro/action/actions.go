@@ -48,7 +48,7 @@ func (h *BufPane) ScrollReachedEnd() bool {
 
 // MousePress is the event that should happen when a normal click happens
 // This is almost always bound to left click
-func (h *BufPane) MousePress(e *tcell.EventMouse) bool {
+func (h *BufPane) MousePress(e *tcell.EventMouse, takeFocus func()) bool {
 	b := h.Buf
 	mx, my := e.Position()
 	mouseLoc := h.LocFromVisual(buffer.Loc{mx, my})
@@ -93,10 +93,11 @@ func (h *BufPane) MousePress(e *tcell.EventMouse) bool {
 	h.Cursor.StoreVisualX()
 	h.lastLoc = mouseLoc
 	h.Relocate()
+	takeFocus()
 	return true
 }
 
-func (h *BufPane) MouseDrag(e *tcell.EventMouse) bool {
+func (h *BufPane) MouseDrag(e *tcell.EventMouse, takeFocus func()) bool {
 	mx, my := e.Position()
 	// ignore drag on the status line
 	if my >= h.BufView().Y+h.BufView().Height {
@@ -117,7 +118,7 @@ func (h *BufPane) MouseDrag(e *tcell.EventMouse) bool {
 	return true
 }
 
-func (h *BufPane) MouseRelease(e *tcell.EventMouse) bool {
+func (h *BufPane) MouseRelease(e *tcell.EventMouse, takeFocus func()) bool {
 	// We could finish the selection based on the release location as in the
 	// commented out code below, to allow text selections even in a terminal
 	// that doesn't support mouse motion events. But when the mouse click is
@@ -1792,7 +1793,7 @@ func (h *BufPane) SpawnMultiCursorSelect() bool {
 
 // MouseMultiCursor is a mouse action which puts a new cursor at the mouse position,
 // or removes a cursor if it is already there
-func (h *BufPane) MouseMultiCursor(e *tcell.EventMouse) bool {
+func (h *BufPane) MouseMultiCursor(e *tcell.EventMouse, takeFocus func()) bool {
 	b := h.Buf
 	mx, my := e.Position()
 	// ignore click on the status line

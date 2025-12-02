@@ -6,8 +6,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-type PaneKeyAction func(Pane) bool
-type PaneMouseAction func(Pane, *tcell.EventMouse) bool
+type PaneKeyAction func(Pane, func()) bool
+type PaneMouseAction func(Pane, *tcell.EventMouse, func()) bool
 type PaneKeyAnyAction func(Pane, []KeyEvent) bool
 
 // A KeyTreeNode stores a single node in the KeyTree (trie). The
@@ -72,12 +72,12 @@ func (k *KeyTreeCursor) MakeClosure(a TreeAction) PaneKeyAction {
 	if a.action != nil {
 		return a.action
 	} else if a.any != nil {
-		return func(p Pane) bool {
+		return func(p Pane, takeFocus func()) bool {
 			return a.any(p, k.wildcards)
 		}
 	} else if a.mouse != nil {
-		return func(p Pane) bool {
-			return a.mouse(p, k.mouseInfo)
+		return func(p Pane, takeFocus func()) bool {
+			return a.mouse(p, k.mouseInfo, takeFocus)
 		}
 	}
 

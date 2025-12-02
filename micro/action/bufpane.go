@@ -16,22 +16,22 @@ type BufAction any
 type BufKeyAction func(*BufPane) bool
 
 // BufMouseAction is an action that must be bound to a mouse event.
-type BufMouseAction func(*BufPane, *tcell.EventMouse) bool
+type BufMouseAction func(*BufPane, *tcell.EventMouse, func()) bool
 
 // BufBindings stores the bindings for the buffer pane type.
 var BufBindings *KeyTree
 
 // BufKeyActionGeneral makes a general pane action from a BufKeyAction.
 func BufKeyActionGeneral(a BufKeyAction) PaneKeyAction {
-	return func(p Pane) bool {
+	return func(p Pane, takeFocus func()) bool {
 		return a(p.(*BufPane))
 	}
 }
 
 // BufMouseActionGeneral makes a general pane mouse action from a BufKeyAction.
 func BufMouseActionGeneral(a BufMouseAction) PaneMouseAction {
-	return func(p Pane, me *tcell.EventMouse) bool {
-		return a(p.(*BufPane), me)
+	return func(p Pane, me *tcell.EventMouse, takeFocus func()) bool {
+		return a(p.(*BufPane), me, takeFocus)
 	}
 }
 
@@ -73,7 +73,7 @@ func BufMapEvent(bufBindings *KeyTree, k Event, action string) {
 		}
 		actionfns = append(actionfns, afn)
 	}
-	bufAction := func(h *BufPane, te *tcell.EventMouse) bool {
+	bufAction := func(h *BufPane, te *tcell.EventMouse, takeFocus func()) bool {
 		for i, a := range actionfns {
 			var success bool
 			if _, ok := MultiActions[names[i]]; ok {
@@ -81,12 +81,12 @@ func BufMapEvent(bufBindings *KeyTree, k Event, action string) {
 				for _, c := range h.Buf.GetCursors() {
 					h.Buf.SetCurCursor(c.Num)
 					h.Cursor = c
-					success = success && h.execAction(a, names[i], te)
+					success = success && h.execAction(a, names[i], te, takeFocus)
 				}
 			} else {
 				h.Buf.SetCurCursor(0)
 				h.Cursor = h.Buf.GetActiveCursor()
-				success = h.execAction(a, names[i], te)
+				success = h.execAction(a, names[i], te, takeFocus)
 			}
 
 			if (!success && types[i] == '&') || (success && types[i] == '|') {
@@ -99,7 +99,7 @@ func BufMapEvent(bufBindings *KeyTree, k Event, action string) {
 	switch e := k.(type) {
 	case KeyEvent, KeySequenceEvent, RawEvent:
 		bufBindings.RegisterKeyBinding(e, BufKeyActionGeneral(func(h *BufPane) bool {
-			return bufAction(h, nil)
+			return bufAction(h, nil, func() {})
 		}))
 	case MouseEvent:
 		bufBindings.RegisterMouseBinding(e, BufMouseActionGeneral(bufAction))
@@ -246,7 +246,7 @@ func (h *BufPane) initialRelocate() {
 }
 
 // HandleEvent executes the tcell event properly
-func (h *BufPane) HandleEvent(event tcell.Event) {
+func (h *BufPane) HandleEvent(event tcell.Event, takeFocus func()) {
 	switch e := event.(type) {
 	// case *tcell.EventRaw:
 	// 	re := RawEvent{
@@ -259,7 +259,7 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 	case *tcell.EventKey:
 		ke := keyEvent(e)
 
-		done := h.DoKeyEvent(ke)
+		done := h.DoKeyEvent(ke, takeFocus)
 		if !done && e.Key() == tcell.KeyRune {
 			h.DoRuneInsert(e.Rune())
 		}
@@ -279,7 +279,7 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 			if isDrag {
 				me.state = MouseDrag
 			}
-			h.DoMouseEvent(me, e)
+			h.DoMouseEvent(me, e, takeFocus)
 		} else {
 			// Mouse event with no click - mouse was just released.
 			// If there were multiple mouse buttons pressed, we don't know which one
@@ -288,7 +288,7 @@ func (h *BufPane) HandleEvent(event tcell.Event) {
 				delete(h.mousePressed, me)
 
 				me.state = MouseRelease
-				h.DoMouseEvent(me, e)
+				h.DoMouseEvent(me, e, takeFocus)
 			}
 		}
 	}
@@ -320,11 +320,11 @@ func (h *BufPane) Bindings() *KeyTree {
 // Returns true if the action was executed OR if there are more keys
 // remaining to process before executing an action (if this is a key
 // sequence event). Returns false if no action found.
-func (h *BufPane) DoKeyEvent(e Event) bool {
+func (h *BufPane) DoKeyEvent(e Event, takeFocus func()) bool {
 	binds := h.Bindings()
 	action, more := binds.NextEvent(e, nil)
 	if action != nil && !more {
-		action(h)
+		action(h, takeFocus)
 		binds.ResetEvents()
 		return true
 	} else if action == nil && !more {
@@ -333,7 +333,7 @@ func (h *BufPane) DoKeyEvent(e Event) bool {
 	return more
 }
 
-func (h *BufPane) execAction(action BufAction, name string, te *tcell.EventMouse) bool {
+func (h *BufPane) execAction(action BufAction, name string, te *tcell.EventMouse, takeFocus func()) bool {
 	if name != "Autocomplete" && name != "CycleAutocompleteBack" {
 		h.Buf.HasSuggestions = false
 	}
@@ -343,7 +343,7 @@ func (h *BufPane) execAction(action BufAction, name string, te *tcell.EventMouse
 	case BufKeyAction:
 		success = a(h)
 	case BufMouseAction:
-		success = a(h, te)
+		success = a(h, te, takeFocus)
 	}
 
 	return success
@@ -358,11 +358,11 @@ func (h *BufPane) HasKeyEvent(e Event) bool {
 
 // DoMouseEvent executes a mouse event by finding the action it is bound
 // to and executing it
-func (h *BufPane) DoMouseEvent(e MouseEvent, te *tcell.EventMouse) bool {
+func (h *BufPane) DoMouseEvent(e MouseEvent, te *tcell.EventMouse, takeFocus func()) bool {
 	binds := h.Bindings()
 	action, _ := binds.NextEvent(e, te)
 	if action != nil {
-		action(h)
+		action(h, takeFocus)
 		binds.ResetEvents()
 		return true
 	}
@@ -402,15 +402,6 @@ func (h *BufPane) DoRuneInsert(r rune) {
 		}
 		h.Relocate()
 	}
-}
-
-// SetActive marks this pane as active.
-func (h *BufPane) SetActive(b bool) {
-	if h.IsActive() == b {
-		return
-	}
-
-	h.BWindow.SetActive(b)
 }
 
 // BufKeyActions contains the list of all possible key actions the bufhandler could execute
