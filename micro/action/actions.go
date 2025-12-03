@@ -942,16 +942,6 @@ func (h *BufPane) InsertTab() bool {
 	return true
 }
 
-// // Find opens a prompt and searches forward for the input
-// func (h *BufPane) Find() bool {
-// 	return h.find(true)
-// }
-
-// // FindLiteral is the same as Find() but does not support regular expressions
-// func (h *BufPane) FindLiteral() bool {
-// 	return h.find(false)
-// }
-
 // Search for a string/regex and select it
 //
 // Returns true,nil if the string was found, false,nil if not found, and false,error on error.
@@ -969,71 +959,11 @@ func (h *BufPane) Search(str string, useRegex bool, caseSensitive bool, searchDo
 		h.Buf.LastSearch = str
 		h.Buf.LastSearchRegex = useRegex
 		h.Buf.HighlightSearch = h.Buf.Settings["hlsearch"].(bool)
-	} else {
 		return true, nil
+	} else {
+		return false, nil
 	}
-	return false, nil
 }
-
-// func (h *BufPane) find(useRegex bool) bool {
-// 	h.searchOrig = h.Cursor.Loc
-// 	prompt := "Find: "
-// 	if useRegex {
-// 		prompt = "Find (regex): "
-// 	}
-// 	var eventCallback func(resp string)
-// 	if h.Buf.Settings["incsearch"].(bool) {
-// 		eventCallback = func(resp string) {
-// 			match, found, _ := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
-// 			if found {
-// 				h.Cursor.SetSelectionStart(match[0])
-// 				h.Cursor.SetSelectionEnd(match[1])
-// 				h.Cursor.OrigSelection[0] = h.Cursor.CurSelection[0]
-// 				h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
-// 				h.GotoLoc(match[1])
-// 			} else {
-// 				h.GotoLoc(h.searchOrig)
-// 				h.Cursor.ResetSelection()
-// 			}
-// 		}
-// 	}
-// 	findCallback := func(resp string, canceled bool) {
-// 		// Finished callback
-// 		if !canceled {
-// 			match, found, err := h.Buf.FindNext(resp, h.Buf.Start(), h.Buf.End(), h.searchOrig, true, useRegex)
-// 			if err != nil {
-// 				InfoBar.Error(err)
-// 			}
-// 			if found {
-// 				h.Cursor.SetSelectionStart(match[0])
-// 				h.Cursor.SetSelectionEnd(match[1])
-// 				h.Cursor.OrigSelection[0] = h.Cursor.CurSelection[0]
-// 				h.Cursor.OrigSelection[1] = h.Cursor.CurSelection[1]
-// 				h.GotoLoc(h.Cursor.CurSelection[1])
-// 				h.Buf.LastSearch = resp
-// 				h.Buf.LastSearchRegex = useRegex
-// 				h.Buf.HighlightSearch = h.Buf.Settings["hlsearch"].(bool)
-// 			} else {
-// 				h.Cursor.ResetSelection()
-// 				InfoBar.Message("No matches found")
-// 			}
-// 		} else {
-// 			h.Cursor.ResetSelection()
-// 		}
-// 	}
-// 	pattern := string(h.Cursor.GetSelection())
-// 	if useRegex && pattern != "" {
-// 		pattern = regexp.QuoteMeta(pattern)
-// 	}
-// 	if eventCallback != nil && pattern != "" {
-// 		eventCallback(pattern)
-// 	}
-// 	InfoBar.Prompt(prompt, pattern, "Find", eventCallback, findCallback)
-// 	if pattern != "" {
-// 		InfoBar.SelectAll()
-// 	}
-// 	return true
-// }
 
 // ToggleHighlightSearch toggles highlighting all instances of the last used search term
 func (h *BufPane) ToggleHighlightSearch() bool {
