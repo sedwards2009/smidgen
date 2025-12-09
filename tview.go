@@ -246,6 +246,7 @@ const (
 	ActionJumpToMatchingBrace    = "JumpToMatchingBrace"
 	ActionInsertEnter            = "InsertEnter"
 	ActionUnbindKey              = "UnbindKey"
+	ActionStartOfTextToggle      = "StartOfTextToggle"
 	ActionMousePress             = "MousePress"
 	ActionMouseDrag              = "MouseDrag"
 	ActionMouseRelease           = "MouseRelease"
