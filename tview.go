@@ -47,7 +47,9 @@ func (v *View) Draw(screen tcell.Screen) {
 	innerX, innerY, width, height := v.GetInnerRect()
 	v.bufWindow.X = innerX
 	v.bufWindow.Y = innerY
-	v.bufWindow.Resize(width, height)
+	if v.bufWindow.Width != width || v.bufWindow.Height != height {
+		v.bufWindow.Resize(width, height)
+	}
 	v.bufWindow.Display(screen, v.HasFocus())
 }
 
