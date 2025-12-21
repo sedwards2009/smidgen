@@ -510,6 +510,9 @@ var BufKeyActions = map[string]BufKeyAction{
 
 	// This was changed to InsertNewline but I don't want to break backwards compatibility
 	"InsertEnter": (*BufPane).InsertNewline,
+
+	"SetManualSelectionStart": (*BufPane).SetManualSelectionStart,
+	"SetManualSelectionEnd":   (*BufPane).SetManualSelectionEnd,
 }
 
 // BufMouseActions contains the list of all possible mouse actions the bufhandler could execute

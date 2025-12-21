@@ -181,6 +181,8 @@ type Buffer struct {
 	curCursor   int
 	StartCursor Loc
 
+	ManualSelection *Cursor
+
 	// OptionCallback is called after a buffer option value is changed.
 	// The display module registers its OptionCallback to ensure the buffer window
 	// is properly updated when needed. This is a workaround for the fact that
@@ -227,6 +229,7 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 	b.SharedBuffer = new(SharedBuffer)
 	b.Settings = config.DefaultCommonSettings()
 	b.Path = path
+	b.ManualSelection = NewCursor(b, Loc{X: 0, Y: 0})
 
 	var err error
 	b.encoding, err = htmlindex.Get(b.Settings["encoding"].(string))
@@ -285,16 +288,22 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 
 // Insert inserts the given string of text at the start location
 func (b *Buffer) Insert(start Loc, text string) {
-	b.EventHandler.cursors = b.cursors
+	cursorLike := b.cursors
+	cursorLike = append(cursorLike, b.ManualSelection)
+	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
 	b.EventHandler.Insert(start, text)
+	b.EventHandler.cursors = b.cursors
 }
 
 // Remove removes the characters between the start and end locations
 func (b *Buffer) Remove(start, end Loc) {
-	b.EventHandler.cursors = b.cursors
+	cursorLike := b.cursors
+	cursorLike = append(cursorLike, b.ManualSelection)
+	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
 	b.EventHandler.Remove(start, end)
+	b.EventHandler.cursors = b.cursors
 }
 
 // FileType returns the buffer's filetype

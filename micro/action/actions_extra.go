@@ -37,3 +37,26 @@ func (h *BufPane) TransformSelection(transformFunc func([]string) []string) {
 		c.SetSelectionEnd(insertLoc)
 	}
 }
+
+func (h *BufPane) SetManualSelectionStart() bool {
+	h.Buf.ManualSelection.Loc = h.Cursor.Loc
+	h.Buf.ManualSelection.CurSelection[0] = h.Cursor.Loc
+	h.SelectManualSelection()
+	return true
+}
+
+func (h *BufPane) SetManualSelectionEnd() bool {
+	h.Buf.ManualSelection.CurSelection[1] = h.Cursor.Loc
+	h.SelectManualSelection()
+	return true
+}
+
+func (h *BufPane) SelectManualSelection() bool {
+	if h.Buf.ManualSelection.CurSelection[0] == h.Buf.ManualSelection.CurSelection[1] {
+		return false
+	}
+	h.Cursor.SetSelectionStart(h.Buf.ManualSelection.CurSelection[0])
+	h.Cursor.SetSelectionEnd(h.Buf.ManualSelection.CurSelection[1])
+	h.Relocate()
+	return true
+}
