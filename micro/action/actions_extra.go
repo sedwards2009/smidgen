@@ -52,7 +52,8 @@ func (h *BufPane) SetManualSelectionEnd() bool {
 }
 
 func (h *BufPane) SelectManualSelection() bool {
-	if h.Buf.ManualSelection.CurSelection[0] == h.Buf.ManualSelection.CurSelection[1] {
+	curSelection := h.Buf.ManualSelection.CurSelection
+	if curSelection[0] == curSelection[1] || curSelection[0].Y < 0 || curSelection[1].Y < 0 {
 		return false
 	}
 	h.Cursor.SetSelectionStart(h.Buf.ManualSelection.CurSelection[0])

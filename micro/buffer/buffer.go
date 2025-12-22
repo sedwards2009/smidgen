@@ -230,6 +230,8 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 	b.Settings = config.DefaultCommonSettings()
 	b.Path = path
 	b.ManualSelection = NewCursor(b, Loc{X: 0, Y: 0})
+	b.ManualSelection.CurSelection[0] = Loc{X: 0, Y: -1}
+	b.ManualSelection.CurSelection[1] = Loc{X: 0, Y: -1}
 
 	var err error
 	b.encoding, err = htmlindex.Get(b.Settings["encoding"].(string))
