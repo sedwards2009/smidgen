@@ -290,7 +290,8 @@ func NewBuffer(r io.Reader, size int64, path string) *Buffer {
 
 // Insert inserts the given string of text at the start location
 func (b *Buffer) Insert(start Loc, text string) {
-	cursorLike := b.cursors
+	cursorLike := make([]*Cursor, len(b.cursors))
+	copy(cursorLike, b.cursors)
 	cursorLike = append(cursorLike, b.ManualSelection)
 	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
@@ -300,7 +301,8 @@ func (b *Buffer) Insert(start Loc, text string) {
 
 // Remove removes the characters between the start and end locations
 func (b *Buffer) Remove(start, end Loc) {
-	cursorLike := b.cursors
+	cursorLike := make([]*Cursor, len(b.cursors))
+	copy(cursorLike, b.cursors)
 	cursorLike = append(cursorLike, b.ManualSelection)
 	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
