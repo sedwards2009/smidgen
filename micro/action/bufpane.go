@@ -513,6 +513,7 @@ var BufKeyActions = map[string]BufKeyAction{
 
 	"SetManualSelectionStart": (*BufPane).SetManualSelectionStart,
 	"SetManualSelectionEnd":   (*BufPane).SetManualSelectionEnd,
+	"ToggleBookmark":          (*BufPane).ToggleBookmark,
 }
 
 // BufMouseActions contains the list of all possible mouse actions the bufhandler could execute

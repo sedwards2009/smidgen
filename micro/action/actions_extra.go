@@ -1,5 +1,9 @@
 package action
 
+import (
+	"github.com/sedwards2009/smidgen/micro/buffer"
+)
+
 // Extra actions which are not from micro
 
 func (h *BufPane) TransformSelection(transformFunc func([]string) []string) {
@@ -59,5 +63,26 @@ func (h *BufPane) SelectManualSelection() bool {
 	h.Cursor.SetSelectionStart(h.Buf.ManualSelection.CurSelection[0])
 	h.Cursor.SetSelectionEnd(h.Buf.ManualSelection.CurSelection[1])
 	h.Relocate()
+	return true
+}
+
+func (h *BufPane) ToggleBookmark() bool {
+	h.Buf.ToggleBookmark(h.Cursor.Loc.Y)
+	return true
+}
+
+func (h *BufPane) GoToNextBookmark() bool {
+	row, result := h.Buf.NextBookmark(h.Cursor.Loc.Y)
+	if result != buffer.BookmarkResultNotFound {
+		h.GotoLoc(buffer.Loc{Y: row})
+	}
+	return true
+}
+
+func (h *BufPane) GoToPreviousBookmark() bool {
+	row, result := h.Buf.PreviousBookmark(h.Cursor.Loc.Y)
+	if result != buffer.BookmarkResultNotFound {
+		h.GotoLoc(buffer.Loc{Y: row})
+	}
 	return true
 }

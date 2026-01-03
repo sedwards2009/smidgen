@@ -254,6 +254,7 @@ const (
 	ActionMouseRelease            = "MouseRelease"
 	ActionSetManualSelectionStart = "SetManualSelectionStart"
 	ActionSetManualSelectionEnd   = "SetManualSelectionEnd"
+	ActionToggleBookmark          = "ToggleBookmark"
 )
 
 type KeyDesc struct {

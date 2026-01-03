@@ -386,6 +386,12 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen, hasFocus bool) {
 		}
 	}
 
+	bookmarkStyle := w.Colorscheme.GetDefault()
+	bookmarkStyle = bookmarkStyle.Reverse(true)
+	if style, ok := w.Colorscheme["bookmark"]; ok {
+		bookmarkStyle = style
+	}
+
 	softwrap := b.Settings["softwrap"].(bool)
 	wordwrap := softwrap && b.Settings["wordwrap"].(bool)
 
@@ -430,6 +436,8 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen, hasFocus bool) {
 		}
 	}
 
+	bookmarkLines := b.BookmarkLinesSet()
+
 	for ; vloc.Y < w.bufHeight; vloc.Y++ {
 		vloc.X = 0
 
@@ -452,7 +460,11 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen, hasFocus bool) {
 			}
 
 			if b.Settings["ruler"].(bool) {
-				w.drawLineNum(screen, s, false, &vloc, &bloc)
+				if _, ok := bookmarkLines[bloc.Y]; ok {
+					w.drawLineNum(screen, bookmarkStyle, false, &vloc, &bloc)
+				} else {
+					w.drawLineNum(screen, s, false, &vloc, &bloc)
+				}
 			}
 		} else {
 			vloc.X = w.gutterOffset
@@ -639,7 +651,11 @@ func (w *BufWindow) displayBuffer(screen tcell.Screen, hasFocus bool) {
 
 				// This will draw an empty line number because the current line is wrapped
 				if b.Settings["ruler"].(bool) {
-					w.drawLineNum(screen, lineNumStyle, true, &vloc, &bloc)
+					if _, ok := bookmarkLines[bloc.Y]; ok {
+						w.drawLineNum(screen, bookmarkStyle, true, &vloc, &bloc)
+					} else {
+						w.drawLineNum(screen, lineNumStyle, true, &vloc, &bloc)
+					}
 				}
 			} else {
 				vloc.X = w.gutterOffset

@@ -3,10 +3,12 @@ package buffer
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"crypto/md5"
 	"errors"
 	"io"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -182,6 +184,7 @@ type Buffer struct {
 	StartCursor Loc
 
 	ManualSelection *Cursor
+	Bookmarks       []*Cursor
 
 	// OptionCallback is called after a buffer option value is changed.
 	// The display module registers its OptionCallback to ensure the buffer window
@@ -293,6 +296,8 @@ func (b *Buffer) Insert(start Loc, text string) {
 	cursorLike := make([]*Cursor, len(b.cursors))
 	copy(cursorLike, b.cursors)
 	cursorLike = append(cursorLike, b.ManualSelection)
+	cursorLike = append(cursorLike, b.Bookmarks...)
+
 	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
 	b.EventHandler.Insert(start, text)
@@ -304,10 +309,85 @@ func (b *Buffer) Remove(start, end Loc) {
 	cursorLike := make([]*Cursor, len(b.cursors))
 	copy(cursorLike, b.cursors)
 	cursorLike = append(cursorLike, b.ManualSelection)
+	cursorLike = append(cursorLike, b.Bookmarks...)
+
 	b.EventHandler.cursors = cursorLike
 	b.EventHandler.active = b.curCursor
 	b.EventHandler.Remove(start, end)
 	b.EventHandler.cursors = b.cursors
+
+	b.mergeBookmarks()
+}
+
+func (b *Buffer) mergeBookmarks() {
+	if len(b.Bookmarks) <= 1 {
+		return
+	}
+
+	newBookmarks := make([]*Cursor, 0, len(b.Bookmarks))
+	newBookmarks = append(newBookmarks, b.Bookmarks[0])
+	i := 1
+	for i < len(b.Bookmarks) {
+		if newBookmarks[len(newBookmarks)-1].Loc != b.Bookmarks[i].Loc {
+			newBookmarks = append(newBookmarks, b.Bookmarks[i])
+		}
+		i++
+	}
+	b.Bookmarks = newBookmarks
+}
+
+func (b *Buffer) ToggleBookmark(row int) {
+	target := &Cursor{}
+	target.Loc = Loc{X: 0, Y: row}
+	n, found := slices.BinarySearchFunc(b.Bookmarks, target, func(a *Cursor, b *Cursor) int {
+		return cmp.Compare(a.Loc.Y, b.Loc.Y)
+	})
+
+	if found {
+		b.Bookmarks = slices.Replace(b.Bookmarks, n, n+1, make([]*Cursor, 0)...)
+	} else {
+		b.Bookmarks = append(b.Bookmarks, NewCursor(b, Loc{X: 0, Y: row}))
+		slices.SortFunc(b.Bookmarks, func(a *Cursor, b *Cursor) int {
+			return cmp.Compare(a.Loc.Y, b.Loc.Y)
+		})
+	}
+}
+
+func (b *Buffer) BookmarkLinesSet() map[int]bool {
+	result := make(map[int]bool)
+	for _, bm := range b.Bookmarks {
+		result[bm.Loc.Y] = true
+	}
+	return result
+}
+
+const BookmarkResultOk = 1
+const BookmarkResultNotFound = 0
+const BookmarkResultWrap = 2
+
+func (b *Buffer) NextBookmark(row int) (int, int) {
+	for _, mark := range b.Bookmarks {
+		if mark.Loc.Y > row {
+			return mark.Loc.Y, BookmarkResultOk
+		}
+	}
+	if len(b.Bookmarks) > 0 {
+		return b.Bookmarks[0].Loc.Y, BookmarkResultWrap
+	}
+	return -1, BookmarkResultNotFound
+}
+
+func (b *Buffer) PreviousBookmark(row int) (int, int) {
+	for i := len(b.Bookmarks) - 1; i >= 0; i-- {
+		mark := b.Bookmarks[i]
+		if mark.Loc.Y < row {
+			return mark.Loc.Y, BookmarkResultOk
+		}
+	}
+	if len(b.Bookmarks) > 0 {
+		return b.Bookmarks[len(b.Bookmarks)-1].Loc.Y, BookmarkResultWrap
+	}
+	return -1, BookmarkResultNotFound
 }
 
 // FileType returns the buffer's filetype
