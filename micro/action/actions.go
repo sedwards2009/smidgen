@@ -1384,7 +1384,7 @@ func (h *BufPane) MoveLinesDown() bool {
 func (h *BufPane) Paste() bool {
 	clip, err := clipboard.ClipboardReadAll()
 	if err == nil {
-		h.paste(clip)
+		h.PasteString(clip)
 	}
 	h.Relocate()
 	return true
@@ -1394,13 +1394,13 @@ func (h *BufPane) Paste() bool {
 func (h *BufPane) PastePrimary() bool {
 	clip, err := clipboard.ClipboardReadAll()
 	if err == nil {
-		h.paste(clip)
+		h.PasteString(clip)
 	}
 	h.Relocate()
 	return true
 }
 
-func (h *BufPane) paste(clip string) {
+func (h *BufPane) PasteString(clip string) {
 	if h.Buf.Settings["smartpaste"].(bool) {
 		if h.Cursor.X > 0 {
 			leadingPasteWS := string(util.GetLeadingWhitespace([]byte(clip)))

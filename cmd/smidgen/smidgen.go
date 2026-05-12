@@ -35,6 +35,7 @@ func main() {
 	app := tview.NewApplication()
 	tview.DoubleClickInterval = 0 // Disable tview's double-click handling
 	app.EnableMouse(true)
+	app.EnablePaste(true)
 
 	buffer := smidgen.NewBufferFromString(string(content), path)
 	root := smidgen.NewView(app, buffer)

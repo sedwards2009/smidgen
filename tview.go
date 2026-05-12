@@ -78,6 +78,12 @@ func (v *View) MouseHandler() func(action tview.MouseAction, event *tcell.EventM
 	})
 }
 
+func (v *View) PasteHandler() func(pastedText string, setFocus func(p tview.Primitive)) {
+	return v.WrapPasteHandler(func(pastedText string, setFocus func(p tview.Primitive)) {
+		v.bufPane.PasteString(pastedText)
+	})
+}
+
 func (v *View) SetColorscheme(cs Colorscheme) {
 	v.bufWindow.Colorscheme = config.Colorscheme(cs)
 	v.buffer.UpdateRules()
