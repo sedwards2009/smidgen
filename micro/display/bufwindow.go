@@ -193,7 +193,9 @@ func (w *BufWindow) Relocate() bool {
 	}
 
 	// horizontal relocation (scrolling)
-	if !b.Settings["softwrap"].(bool) {
+	// (Skipped when softwrap is on, or when the window has not been sized yet,
+	//  to avoid corrupting StartCol with a zero bufWidth during initialRelocate.)
+	if !b.Settings["softwrap"].(bool) && w.bufWidth > 0 {
 		cx := activeC.GetVisualX(false)
 		rw := runewidth.RuneWidth(activeC.RuneUnder(activeC.X))
 		if rw == 0 {
